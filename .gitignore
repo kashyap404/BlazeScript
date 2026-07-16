@@ -1,0 +1,4 @@
+echo "blazescript
+*.o
+.DS_Store" > .gitignore
+git add .gitignore
