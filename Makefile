@@ -1,4 +1,4 @@
-CXX = clang++
+CXX ?= g++
 CXXFLAGS = -std=c++17 -Wall -Iinclude
 SRC = $(wildcard src/*.cpp)
 TARGET = blazescript
