@@ -7,6 +7,7 @@
 class Scanner {
 public:
     explicit Scanner(std::string source);
+    static Scanner fromFile(const std::string& path);
     std::vector<Token> scanTokens();
 
 private:

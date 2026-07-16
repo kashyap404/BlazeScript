@@ -4,7 +4,7 @@
 #include "token_types.h"
 #include <utility>
 
-using Literal = std::variant<std::monostate, double, std::string>;
+using Literal = std::variant<std::monostate, int, double, std::string>;
 
 class Token {
 public:
