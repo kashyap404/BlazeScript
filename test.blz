@@ -1,9 +1,41 @@
-let x: i32 = -5;
-let name = "blaze";
 
-fn abs(x: i32) -> i32 {
-    if (x < 0) {
-        return -x;
+const PI: f64 = 3.14159;
+let count: i32 = 10;
+let radius: f64 = 5.5;
+let active: bool = true;
+let name: string = "BlazeScript";
+
+fn square(x: i32) -> i32 {
+    x * x
+}
+
+fn max(a: i32, b: i32) -> i32 {
+    if (a > b) {
+        return a;
     }
-    x
+    b
+}
+
+fn main() -> i32 {
+    let sum: i32 = 0;
+    let i: i32 = 0;
+
+    while (i < count) {
+        sum = sum + square(i);
+        i = i + 1;
+    }
+
+    for (let j: i32 = 0; j < 5; j = j + 1) {
+        sum = sum + j;
+    }
+
+    if (active && sum >= 50) {
+        print(name);
+    } else {
+        print("Small value");
+    }
+
+    let answer: i32 = max(sum, 100);
+
+    return answer;
 }
