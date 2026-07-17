@@ -1,0 +1,48 @@
+const PI: f64 = 3.14159;
+let x: i32 = -5;
+let y: i64 = 100;
+let a: u32 = 42;
+let b: u64 = 9999;
+let c: f32 = 2.5;
+let d: f64 = -7.25;
+let flag: bool = true;
+let nothing = null;
+let name: string = "BlazeScript";
+
+fn square(n: i32) -> i32 {
+    n * n
+}
+
+fn compare(a: i32, b: i32) -> bool {
+    if (a == b) {
+        return true;
+    }
+
+    if (a != b and a < b) {
+        return false;
+    }
+
+    return a >= b;
+}
+
+fn main() -> i32 {
+    let sum: i32 = 0;
+    let i: i32 = 0;
+
+    while (i <= 10) {
+        sum = sum + i;
+        i = i + 1;
+    }
+
+    for (let j: i32 = 0; j < 5; j = j + 1) {
+        sum = sum + square(j);
+    }
+
+    if (flag or sum > 50) {
+        print(name);
+    } else {
+        print("Small");
+    }
+
+    return sum;
+}
