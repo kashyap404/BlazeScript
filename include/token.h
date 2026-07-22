@@ -13,9 +13,6 @@ public:
           literal_(std::move(literal)), line_(line), column_(column) {}
 
     std::string toString() const;
-
-
-private:
     TokenType type_;
     std::string lexeme_;
     Literal literal_;
