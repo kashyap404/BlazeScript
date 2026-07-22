@@ -7,8 +7,11 @@ class Expr;
 class Stmt
 {
     public:
+    int line = 0;
+    int column = 0;
      virtual ~Stmt() = default;
 };
+
 class ExpressionStmt: public Stmt
 {
     public:
@@ -16,6 +19,7 @@ class ExpressionStmt: public Stmt
     ExpressionStmt(std::unique_ptr<Expr> expr) 
         : expression(std::move(expr)) {}
 };
+
 class ReturnStmt:public Stmt
 {
     public:
@@ -24,6 +28,7 @@ class ReturnStmt:public Stmt
     ReturnStmt(std::unique_ptr<Expr> val)
         : value(std::move(val)) {}
 };
+
 class WhileStmt : public Stmt
 {
 public:
@@ -35,6 +40,7 @@ public:
         : condition(std::move(cond)),
           body(std::move(stmt)) {}
 };
+
 class IfStmt : public Stmt
 {
 public:
@@ -49,6 +55,7 @@ public:
           thenBranch(std::move(thenStmt)),
           elseBranch(std::move(elseStmt)) {}
 };
+
 class BlockStmt : public Stmt
 {
 public:
