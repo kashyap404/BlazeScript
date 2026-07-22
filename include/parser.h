@@ -14,9 +14,9 @@ public:
     std::vector<std::unique_ptr<Stmt>> parse();
 
 private:
-    // expression 
-    std::unique_ptr<Expr> expression();
-    std::unique_ptr<Expr> assignment();
+    // Expressions
+    std::unique_ptr<Expr> parseExpression();
+    std::unique_ptr<Expr> parseAssignment();
     std::unique_ptr<Expr> equality();
     std::unique_ptr<Expr> comparison();
     std::unique_ptr<Expr> term();
@@ -24,15 +24,13 @@ private:
     std::unique_ptr<Expr> unary();
     std::unique_ptr<Expr> primary();
 
-    // statement 
-    std::unique_ptr<Stmt> statement();
-    std::unique_ptr<Stmt> expressionStatement();
-    std::unique_ptr<Stmt> ifStatement();
-    std::unique_ptr<Stmt> whileStatement();
-    std::unique_ptr<Stmt> returnStatement();
-
-
-    std::vector<std::unique_ptr<Stmt>> block();
+    // Statements
+    std::unique_ptr<Stmt> parseStatement();
+    std::unique_ptr<Stmt> parseExpressionStatement();
+    std::unique_ptr<Stmt> parseIfStatement();
+    std::unique_ptr<Stmt> parseWhileStatement();
+    std::unique_ptr<Stmt> parseReturnStatement();
+    std::unique_ptr<BlockStmt> parseBlock();
 
     bool match(std::initializer_list<TokenType> types);
     bool check(TokenType type) const;
@@ -42,7 +40,6 @@ private:
     Token previous() const;
     Token consume(TokenType type, const std::string& message);
 
-private:
     std::vector<Token> tokens_;
     std::size_t current_ = 0;
 };
