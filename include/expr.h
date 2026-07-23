@@ -59,7 +59,9 @@ public:
 class AssignmentExpr : public Expr {
 public:
     AssignmentExpr(std::unique_ptr<Expr> left, std::unique_ptr<Expr> value, int line, int column)
-        : Expr(line, column), name(std::move(name)), value(std::move(value)) {}
+        : Expr(line, column),
+          left(std::move(left)),
+          value(std::move(value)) {}
 
     std::unique_ptr<Expr> left;
     std::unique_ptr<Expr> value;
