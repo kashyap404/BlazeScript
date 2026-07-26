@@ -17,6 +17,8 @@ private:
     // Expressions
     std::unique_ptr<Expr> parseExpression();
     std::unique_ptr<Expr> parseAssignment();
+    std::unique_ptr<Expr> parseOr();        
+    std::unique_ptr<Expr> parseAnd();       
     std::unique_ptr<Expr> equality();
     std::unique_ptr<Expr> comparison();
     std::unique_ptr<Expr> term();

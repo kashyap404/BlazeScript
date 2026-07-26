@@ -146,7 +146,7 @@ std::unique_ptr<Expr> Parser::equality() {
 }
 
 std::unique_ptr<Expr> Parser::parseAssignment() {
-    std::unique_ptr<Expr> expr = equality();
+    std::unique_ptr<Expr> expr = parseOr();
 
     if (match({TokenType::EQUAL})) {
         Token equals = previous();
@@ -157,6 +157,39 @@ std::unique_ptr<Expr> Parser::parseAssignment() {
         }
 
         throw ParseError("[line " + std::to_string(equals.line_) + "] Invalid assignment target.");
+    }
+
+    return expr;
+}
+std::unique_ptr<Expr> Parser::parseOr() {
+    std::unique_ptr<Expr> expr = parseAnd();
+
+    while (match({TokenType::OR})) {
+        Token op = previous();
+        std::unique_ptr<Expr> right = parseAnd();
+        expr = std::make_unique<BinaryExpr>(
+            std::move(expr),
+            tokenTypeToOperator(op.type_),
+            std::move(right),
+            op.line_,
+            op.column_);
+    }
+
+    return expr;
+}
+
+std::unique_ptr<Expr> Parser::parseAnd() {
+    std::unique_ptr<Expr> expr = equality();
+
+    while (match({TokenType::AND})) {
+        Token op = previous();
+        std::unique_ptr<Expr> right = equality();
+        expr = std::make_unique<BinaryExpr>(
+            std::move(expr),
+            tokenTypeToOperator(op.type_),
+            std::move(right),
+            op.line_,
+            op.column_);
     }
 
     return expr;

@@ -11,6 +11,10 @@
 a == b;
 x > 5;
 y <= (10 + 5);
+a and b;
+a or b;
+a == b and c < d;
+x = a or b and c;
 
 
 myVar = 100;
