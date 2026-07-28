@@ -66,3 +66,14 @@ public:
     std::unique_ptr<Expr> left;
     std::unique_ptr<Expr> value;
 };
+
+class CallExpr : public Expr {
+public:
+    CallExpr(std::unique_ptr<Expr> callee, std::vector<std::unique_ptr<Expr>> arguments, int line, int column)
+        : Expr(line, column),
+          callee(std::move(callee)),
+          arguments(std::move(arguments)) {}
+
+    std::unique_ptr<Expr> callee;
+    std::vector<std::unique_ptr<Expr>> arguments;
+};

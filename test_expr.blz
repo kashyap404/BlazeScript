@@ -20,3 +20,9 @@ x = a or b and c;
 myVar = 100;
 a = b = c = 50;
 p == r;
+fn do_nothing() {
+}
+fn add(a, b) {
+     a + b;
+
+}

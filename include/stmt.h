@@ -2,8 +2,9 @@
 #include <memory>
 #include <vector>
 #include <utility>
-
-class Expr;
+#include <optional>
+#include "expr.h"
+#include "token.h"
 
 class Stmt
 {
@@ -74,4 +75,26 @@ public:
     explicit BlockStmt(std::vector<std::unique_ptr<Stmt>> stmts, int line, int column)
         : Stmt(line, column),
           statements(std::move(stmts)) {}
+};
+struct Param
+{
+    Token name;
+};
+
+class FunctionStmt : public Stmt
+{
+public:
+    Token name;
+    std::vector<Param> params;
+    std::unique_ptr<BlockStmt> body;
+
+    FunctionStmt(Token name,
+                 std::vector<Param> params,
+                 std::unique_ptr<BlockStmt> body,
+                 int line,
+                 int column)
+        : Stmt(line, column),
+          name(std::move(name)),
+          params(std::move(params)),
+          body(std::move(body)) {}
 };
