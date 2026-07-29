@@ -1,5 +1,6 @@
 #include <iostream>
 #include "scanner.h"
+#include "parser.h"
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -14,5 +15,14 @@ int main(int argc, char* argv[]) {
         std::cout << token.toString() << "\n";
     }
 
-    return 0;
+    Parser parser(tokens);
+    try {
+        Program program = parser.parse();
+        std::cout << "Parsing succeeded: " << program.statements.size() << " statement(s), "
+                   << program.functions.size() << " function(s) parsed.\n";
+        return 0;
+    } catch (const std::exception& e) {
+        std::cerr << "Parsing failed: " << e.what() << "\n";
+        return 1;
+    }
 }
