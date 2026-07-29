@@ -36,11 +36,12 @@ private:
     std::unique_ptr<Expr> primary();
 
     // Statements 
-    std::unique_ptr<Stmt> parseStatement();
-    std::unique_ptr<Stmt> parseExpressionStatement();
-    std::unique_ptr<Stmt> parseIfStatement();
-    std::unique_ptr<Stmt> parseWhileStatement();
-    std::unique_ptr<Stmt> parseReturnStatement();
+    std::unique_ptr<Stmt> parseStmt();
+    std::unique_ptr<Stmt> parseExprStmt();
+    std::unique_ptr<Stmt> parseIfStmt();
+    std::unique_ptr<Stmt> parseElseStmt();
+    std::unique_ptr<Stmt> parseWhileStmt();
+    std::unique_ptr<Stmt> parseReturnStmt();
     std::unique_ptr<BlockStmt> parseBlock();
 
     // Functions
