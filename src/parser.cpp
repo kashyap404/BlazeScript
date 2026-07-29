@@ -248,7 +248,7 @@ Program Parser::parse() {
         if (match({TokenType::FN})) {
             program.functions.push_back(parseFunctionDeclaration());
         } else {
-            program.statements.push_back(parseExpressionStatement()); 
+            throw ParseError( "expected a function declaration ");
         }
     }
     return program;
