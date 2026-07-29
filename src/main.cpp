@@ -11,11 +11,15 @@ int main(int argc, char* argv[]) {
     Scanner scanner = Scanner::fromFile(argv[1]);
     std::vector<Token> tokens = scanner.scanTokens();
 
+    for (const Token& token : tokens) {
+        std::cout << token.toString() << "\n";
+    }
+
     Parser parser(tokens);
     try {
-        std::vector<std::unique_ptr<Stmt>> statements = parser.parse();
-        std::cout << "Parsing succeeded: " << statements.size()
-                   << " expression statements parsed.\n";
+        Program program = parser.parse();
+        std::cout << "Parsing succeeded: " << program.statements.size() << " statement(s), "
+                   << program.functions.size() << " function(s) parsed.\n";
         return 0;
     } catch (const std::exception& e) {
         std::cerr << "Parsing failed: " << e.what() << "\n";

@@ -8,10 +8,17 @@
 #include "expr.h"
 #include "stmt.h"
 
+#include "function.h"
+
+struct Program {
+    std::vector<std::unique_ptr<Stmt>> statements;
+    std::vector<std::unique_ptr<FuncDefn>> functions;
+};
+
 class Parser {
 public:
     explicit Parser(std::vector<Token> tokens);
-    std::vector<std::unique_ptr<Stmt>> parse();
+    Program parse();
 
 private:
     // Expressions
@@ -28,14 +35,16 @@ private:
     std::unique_ptr<Expr> finishCall(std::unique_ptr<Expr> callee);
     std::unique_ptr<Expr> primary();
 
-    // Statements
+    // Statements 
     std::unique_ptr<Stmt> parseStatement();
     std::unique_ptr<Stmt> parseExpressionStatement();
     std::unique_ptr<Stmt> parseIfStatement();
     std::unique_ptr<Stmt> parseWhileStatement();
     std::unique_ptr<Stmt> parseReturnStatement();
     std::unique_ptr<BlockStmt> parseBlock();
-    std::unique_ptr<Stmt> parseFunctionDeclaration();
+
+    // Functions
+    std::unique_ptr<FuncDefn> parseFunctionDeclaration();
 
     bool match(std::initializer_list<TokenType> types);
     bool check(TokenType type) const;
@@ -44,7 +53,6 @@ private:
     Token peek() const;
     Token previous() const;
     Token consume(TokenType type, const std::string& message);
-    Token consumeType(const std::string& message);
 
     std::vector<Token> tokens_;
     std::size_t current_ = 0;

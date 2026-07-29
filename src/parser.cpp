@@ -102,7 +102,7 @@ std::unique_ptr<Expr> Parser::unary() {
         std::unique_ptr<Expr> right = unary();
         return std::make_unique<UnaryExpr>(tokenTypeToOperator(op.type_), std::move(right), op.line_, op.column_);
     }
-    return parseCall(); // was: return primary(); — needed so calls like a(1, 2) are reachable
+    return parseCall(); 
 }
 
 std::unique_ptr<Expr> Parser::factor() {
@@ -196,26 +196,6 @@ std::unique_ptr<Expr> Parser::parseExpression() {
     return parseAssignment();
 }
 
-std::unique_ptr<Stmt> Parser::parseExpressionStatement() {
-    int line = peek().line_;
-    int column = peek().column_;
-    std::unique_ptr<Expr> expr = parseExpression();
-    consume(TokenType::SEMICOLON, "Expected ';' after expression.");
-    return std::make_unique<ExpressionStmt>(std::move(expr), line, column);
-}
-
-std::vector<std::unique_ptr<Stmt>> Parser::parse() {
-    std::vector<std::unique_ptr<Stmt>> statements;
-    while (!isAtEnd()) {
-        if (match({TokenType::FN})) {
-            statements.push_back(parseFunctionDeclaration());
-        } else {
-            statements.push_back(parseExpressionStatement());
-        }
-    }
-    return statements;
-}
-
 std::unique_ptr<Expr> Parser::finishCall(std::unique_ptr<Expr> callee) {
     Token paren = previous(); 
     std::vector<std::unique_ptr<Expr>> arguments;
@@ -240,37 +220,36 @@ std::unique_ptr<Expr> Parser::parseCall() {
     return expr;
 }
 
-std::unique_ptr<Stmt> Parser::parseFunctionDeclaration() {
+std::unique_ptr<FuncDefn> Parser::parseFunctionDeclaration() {
     Token fnKeyword = previous(); 
     Token name = consume(TokenType::IDENTIFIER, "Expected function name.");
     consume(TokenType::LEFT_PAREN, "Expected '(' after function name.");
 
-    std::vector<Param> params;
+    std::vector<Parameter> params;
     if (!check(TokenType::RIGHT_PAREN)) {
         do {
             Token paramName = consume(TokenType::IDENTIFIER, "Expected parameter name.");
-            params.push_back(Param{paramName});
+            params.push_back(Parameter(paramName, paramName.line_, paramName.column_));
         } while (match({TokenType::COMMA}));
     }
     consume(TokenType::RIGHT_PAREN, "Expected ')' after parameters.");
 
+    Prototype proto(name, std::move(params), fnKeyword.line_, fnKeyword.column_);
+
     consume(TokenType::LEFT_BRACE, "Expected '{' before function body.");
-    std::unique_ptr<BlockStmt> body = parseBlock();
+    std::unique_ptr<BlockStmt> body = parseBlock(); 
 
-    return std::make_unique<FunctionStmt>(name, std::move(params), std::move(body),
-                                           fnKeyword.line_, fnKeyword.column_);
-}
-std::unique_ptr<Stmt> Parser::parseStatement() {
-    if (match({TokenType::LEFT_BRACE})) return parseBlock();
-    return parseExpressionStatement();
+    return std::make_unique<FuncDefn>(std::move(proto), std::move(body), fnKeyword.line_, fnKeyword.column_);
 }
 
-std::unique_ptr<BlockStmt> Parser::parseBlock() {
-    Token braceTok = previous(); 
-    std::vector<std::unique_ptr<Stmt>> statements;
-    while (!check(TokenType::RIGHT_BRACE) && !isAtEnd()) {
-        statements.push_back(parseStatement());
+Program Parser::parse() {
+    Program program;
+    while (!isAtEnd()) {
+        if (match({TokenType::FN})) {
+            program.functions.push_back(parseFunctionDeclaration());
+        } else {
+            program.statements.push_back(parseExpressionStatement()); 
+        }
     }
-    consume(TokenType::RIGHT_BRACE, "Expected '}' after block.");
-    return std::make_unique<BlockStmt>(std::move(statements), braceTok.line_, braceTok.column_);
+    return program;
 }
