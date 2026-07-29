@@ -8,14 +8,6 @@ namespace {
     };
 }
 
-std::vector<std::unique_ptr<Stmt>> Parser::parse() {
-    std::vector<std::unique_ptr<Stmt>> statements;
-    while (!isAtEnd()) {
-        statements.push_back(parseStmt());
-    }
-    return statements;
-}
-
 std::unique_ptr<Stmt> Parser::parseStmt() {
     if (match({TokenType::IF}))         return parseIfStmt();
     if (match({TokenType::WHILE}))      return parseWhileStmt();
