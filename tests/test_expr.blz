@@ -1,0 +1,28 @@
+
+5;
+10 + 20 * 3;
+(10 + 20) * 3;
+
+
+-15;
+!x;
+
+
+a == b;
+x > 5;
+y <= (10 + 5);
+a and b;
+a or b;
+a == b and c < d;
+x = a or b and c;
+
+
+myVar = 100;
+a = b = c = 50;
+p == r;
+fn do_nothing() {
+}
+fn add(a, b) {
+     a + b;
+
+}

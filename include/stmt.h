@@ -2,8 +2,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
-
-class Expr;
+#include "expr.h"
 
 class Stmt
 {

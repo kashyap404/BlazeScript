@@ -1,0 +1,31 @@
+fn main() {
+    return 0;
+}
+
+fn add(a, b) {
+    return a + b;
+}
+
+fn compare(x, y) {
+    if (x == y) {
+        return 1;
+    } else {
+        return 0;
+    }
+    x = y + z;
+}
+
+fn loop_demo() {
+    while (1) {
+        return 42;
+    }
+}
+
+fn expr_demo(a, b) {
+    a = b + 10 * 2;
+    return a;
+}
+
+fn call_demo() {
+    return add(5, 3);
+}
