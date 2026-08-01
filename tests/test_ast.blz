@@ -1,0 +1,4 @@
+fn expr_demo(a, b) {
+    a = b + 10 * 2;
+    return a;
+}
