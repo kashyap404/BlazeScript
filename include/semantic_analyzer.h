@@ -8,6 +8,7 @@
 #include "scope.h"
 #include "symbol.h"
 #include <string>
+#include <unordered_map>
 
 class SemanticAnalyzer : public Visitor {
 public:
@@ -35,7 +36,7 @@ private:
     Type* lastType_ = nullptr;
 
     SymbolTable symbols_;
-    TypeArena types_;
     Type* currentFunctionReturnType_ = nullptr;
     bool hadError_ = false;
+    std::unordered_map<std::string, FuncDefn*> functions_;
 };
