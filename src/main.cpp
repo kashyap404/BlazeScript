@@ -1,6 +1,7 @@
 #include <iostream>
 #include "scanner.h"
 #include "parser.h"
+#include "ast_printer.h"  
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -20,6 +21,11 @@ int main(int argc, char* argv[]) {
         Program program = parser.parse();
         std::cout << "Parsing succeeded: " << program.statements.size() << " statement(s), "
                    << program.functions.size() << " function(s) parsed.\n";
+
+        std::cout << "\n--- AST ---\n";        
+        AstPrinter printer;                     
+        printer.print(program, std::cout);     
+
         return 0;
     } catch (const std::exception& e) {
         std::cerr << "Parsing failed: " << e.what() << "\n";

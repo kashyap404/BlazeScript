@@ -3,6 +3,7 @@
 #include <vector>
 #include <utility>
 #include "expr.h"
+#include "visitor.h"   
 
 class Stmt
 {
@@ -12,6 +13,8 @@ class Stmt
     virtual ~Stmt() = default;
     int line;
     int column;
+
+    virtual void accept(Visitor& visitor) = 0;   
 };
 
 class ExpressionStmt : public Stmt
@@ -22,6 +25,8 @@ class ExpressionStmt : public Stmt
     ExpressionStmt(std::unique_ptr<Expr> expr, int line, int column)
         : Stmt(line, column),
           expression(std::move(expr)) {}
+
+    void accept(Visitor& visitor) override { visitor.visitExpressionStmt(*this); }
 };
 
 class ReturnStmt : public Stmt
@@ -31,6 +36,8 @@ class ReturnStmt : public Stmt
     ReturnStmt(std::unique_ptr<Expr> val, int line, int column)
         : Stmt(line, column),
           value(std::move(val)) {}
+
+    void accept(Visitor& visitor) override { visitor.visitReturnStmt(*this); }
 };
 
 class WhileStmt : public Stmt
@@ -45,6 +52,8 @@ public:
         : Stmt(line, column),
           condition(std::move(cond)),
           body(std::move(stmt)) {}
+
+    void accept(Visitor& visitor) override { visitor.visitWhileStmt(*this); }
 };
 
 class IfStmt : public Stmt
@@ -63,6 +72,8 @@ public:
           condition(std::move(cond)),
           thenBranch(std::move(thenStmt)),
           elseBranch(std::move(elseStmt)) {}
+
+    void accept(Visitor& visitor) override { visitor.visitIfStmt(*this); }
 };
 
 class BlockStmt : public Stmt
@@ -73,4 +84,6 @@ public:
     explicit BlockStmt(std::vector<std::unique_ptr<Stmt>> stmts, int line, int column)
         : Stmt(line, column),
           statements(std::move(stmts)) {}
+
+    void accept(Visitor& visitor) override { visitor.visitBlockStmt(*this); }
 };

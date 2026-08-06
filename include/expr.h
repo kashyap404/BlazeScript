@@ -1,6 +1,8 @@
 #pragma once
 #include <memory>
+#include <vector>
 #include "token.h"
+#include "visitor.h"   
 
 enum class OperatorType {
     PLUS, MINUS, STAR, SLASH,
@@ -19,6 +21,8 @@ public:
 
     int line;
     int column;
+
+    virtual void accept(Visitor& visitor) = 0;   
 };
 
 class LiteralExpr : public Expr {
@@ -27,6 +31,8 @@ public:
         : Expr(line, column), value(value) {}
 
     int value;
+
+    void accept(Visitor& visitor) override { visitor.visitLiteralExpr(*this); }
 };
 
 class VariableExpr : public Expr  {
@@ -35,6 +41,8 @@ class VariableExpr : public Expr  {
         : Expr(line, column), name(std::move(name)) {}
 
     Token name;
+
+    void accept(Visitor& visitor) override { visitor.visitVariableExpr(*this); }
 };
 
 class UnaryExpr : public Expr {
@@ -44,6 +52,8 @@ public:
 
     OperatorType op;
     std::unique_ptr<Expr> right;
+
+    void accept(Visitor& visitor) override { visitor.visitUnaryExpr(*this); }
 };
 
 class BinaryExpr : public Expr {
@@ -54,6 +64,8 @@ public:
     std::unique_ptr<Expr> left;
     OperatorType op;
     std::unique_ptr<Expr> right;
+
+    void accept(Visitor& visitor) override { visitor.visitBinaryExpr(*this); }
 };
 
 class AssignmentExpr : public Expr {
@@ -65,6 +77,8 @@ public:
 
     std::unique_ptr<Expr> left;
     std::unique_ptr<Expr> value;
+
+    void accept(Visitor& visitor) override { visitor.visitAssignmentExpr(*this); }
 };
 
 class CallExpr : public Expr {
@@ -76,4 +90,6 @@ public:
 
     std::unique_ptr<Expr> callee;
     std::vector<std::unique_ptr<Expr>> arguments;
+
+    void accept(Visitor& visitor) override { visitor.visitCallExpr(*this); }
 };

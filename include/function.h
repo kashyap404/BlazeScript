@@ -4,14 +4,17 @@
 #include <memory>
 #include "token.h"
 #include "stmt.h"
+#include "type.h" 
 
 class Parameter
 {
 public:
-    Parameter(Token name, int line, int column)
-        : name(std::move(name)), line(line), column(column) {}
+    
+    Parameter(Token name, Type* type, int line, int column)
+        : name(std::move(name)), type(type), line(line), column(column) {}
 
     Token name;
+    Type* type; 
     int line;
     int column;
 };
@@ -19,11 +22,12 @@ public:
 class Prototype
 {
 public:
-    Prototype(Token name, std::vector<Parameter> params, int line, int column)
-        : name(std::move(name)), params(std::move(params)), line(line), column(column) {}
+    Prototype(Token name, std::vector<Parameter> params, Type* returnType, int line, int column)
+        : name(std::move(name)), params(std::move(params)), returnType(returnType), line(line), column(column) {}
 
     Token name;
     std::vector<Parameter> params;
+    Type* returnType;
     int line;
     int column;
 };
