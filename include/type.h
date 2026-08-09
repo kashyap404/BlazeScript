@@ -10,6 +10,7 @@ enum class TypeKind {
     F32,
     F64,
     BOOL,
+    VOID,      
     UNKNOWN
 };
 
@@ -52,12 +53,11 @@ public:
         table[TypeKind::F32] = std::make_unique<Type>(TypeKind::F32);
         table[TypeKind::F64] = std::make_unique<Type>(TypeKind::F64);
         table[TypeKind::BOOL] = std::make_unique<Type>(TypeKind::BOOL);
+        table[TypeKind::VOID] = std::make_unique<Type>(TypeKind::VOID);   // ADDED
         table[TypeKind::UNKNOWN] = std::make_unique<Type>(TypeKind::UNKNOWN);
     }
 
     Type* getType(TypeKind kind) {
         return table[kind].get();
     }
-
 };
- 
