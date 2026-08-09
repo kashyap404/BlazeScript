@@ -229,12 +229,23 @@ std::unique_ptr<FuncDefn> Parser::parseFunctionDeclaration() {
     if (!check(TokenType::RIGHT_PAREN)) {
         do {
             Token paramName = consume(TokenType::IDENTIFIER, "Expected parameter name.");
-            params.push_back(Parameter(paramName, paramName.line_, paramName.column_));
+            
+            // Read parameter type
+            consume(TokenType::COLON, "Expected ':' after parameter name.");
+            Type* paramType = parseType(); 
+            
+            params.push_back(Parameter(paramName, paramType, paramName.line_, paramName.column_));
         } while (match({TokenType::COMMA}));
     }
     consume(TokenType::RIGHT_PAREN, "Expected ')' after parameters.");
 
-    Prototype proto(name, std::move(params), fnKeyword.line_, fnKeyword.column_);
+    // Parse return type (Default to VOID if omitted)
+    Type* returnType = types_.getType(TypeKind::VOID);
+    if (match({TokenType::COLON})) {
+        returnType = parseType();
+    }
+
+    Prototype proto(name, std::move(params), returnType, fnKeyword.line_, fnKeyword.column_);
 
     consume(TokenType::LEFT_BRACE, "Expected '{' before function body.");
     std::unique_ptr<BlockStmt> body = parseBlock(); 
@@ -248,7 +259,8 @@ Program Parser::parse() {
         if (match({TokenType::FN})) {
             program.functions.push_back(parseFunctionDeclaration());
         } else {
-            throw ParseError( "expected a function declaration ");
+            
+            program.statements.push_back(parseStmt()); 
         }
     }
     return program;

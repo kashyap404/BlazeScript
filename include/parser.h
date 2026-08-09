@@ -44,6 +44,9 @@ private:
     std::unique_ptr<Stmt> parseReturnStmt();
     std::unique_ptr<BlockStmt> parseBlock();
 
+    std::unique_ptr<Stmt> parseVarDeclaration();
+    Type* parseType();
+
     // Functions
     std::unique_ptr<FuncDefn> parseFunctionDeclaration();
 
@@ -57,4 +60,5 @@ private:
 
     std::vector<Token> tokens_;
     std::size_t current_ = 0;
+    TypeTable types_;
 };

@@ -1,4 +1,5 @@
 #include "ast_printer.h"
+#include<iostream>
 
 void AstPrinter::indent() {
     for (int i = 0; i < depth_; ++i) {
@@ -185,4 +186,19 @@ void AstPrinter::visitBlockStmt(BlockStmt& stmt) {
         s->accept(*this);
     }
     depth_--;
+}
+void AstPrinter::visitVarDeclStmt(VarDeclStmt& stmt) {
+
+    for (int i = 0; i < depth_; ++i) {
+        std::cout << "  "; 
+    }
+  
+    std::cout << "VarDecl: " << stmt.name.lexeme_ << "\n";
+    
+
+    if (stmt.initializer) {
+        depth_++;
+        stmt.initializer->accept(*this);
+        depth_--;
+    }
 }

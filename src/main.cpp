@@ -2,6 +2,7 @@
 #include "scanner.h"
 #include "parser.h"
 #include "ast_printer.h"  
+#include "semantic_analyzer.h"
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -25,6 +26,19 @@ int main(int argc, char* argv[]) {
         std::cout << "\n--- AST ---\n";        
         AstPrinter printer;                     
         printer.print(program, std::cout);     
+
+       
+        std::cout << "\n--- Semantic Analysis ---\n";
+        SemanticAnalyzer analyzer;
+        analyzer.analyze(program);
+
+        if (analyzer.hadError()) {
+            std::cerr << "Semantic analysis failed due to type/scope errors.\n";
+            return 1;
+        }
+
+        std::cout << "Semantic analysis passed! Types and scopes are valid.\n";
+        // ----------------------------------------------------
 
         return 0;
     } catch (const std::exception& e) {

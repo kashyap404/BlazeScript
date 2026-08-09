@@ -7,14 +7,13 @@
 
 class SymbolTable {
 public:
-    SymbolTable();   //push global scope 
+    SymbolTable(); // Pushes global scope 
 
     void beginScope();
     void endScope();
 
     bool declare(std::unique_ptr<Symbol> symbol);
     Symbol* resolve(const std::string& name) const;
-
     bool isDeclaredInCurrentScope(const std::string& name) const;
 
 private:

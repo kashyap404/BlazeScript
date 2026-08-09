@@ -4,6 +4,7 @@
 #include <utility>
 #include "expr.h"
 #include "visitor.h"   
+#include "type.h"
 
 class Stmt
 {
@@ -86,4 +87,17 @@ public:
           statements(std::move(stmts)) {}
 
     void accept(Visitor& visitor) override { visitor.visitBlockStmt(*this); }
+};
+class VarDeclStmt : public Stmt {
+public:
+    Token name;
+    Type* type; 
+    std::unique_ptr<Expr> initializer; 
+
+    VarDeclStmt(Token n, Type* t, std::unique_ptr<Expr> init)
+        : Stmt(n.line_, n.column_), name(std::move(n)), type(t), initializer(std::move(init)) {}
+
+    void accept(Visitor& visitor) override {
+        visitor.visitVarDeclStmt(*this);
+    }
 };

@@ -25,6 +25,8 @@ public:
     void visitWhileStmt(WhileStmt& stmt) override;
     void visitReturnStmt(ReturnStmt& stmt) override;
     void visitBlockStmt(BlockStmt& stmt) override;
+    
+    void visitVarDeclStmt(VarDeclStmt& stmt) override;
 
 private:
     void indent();                    

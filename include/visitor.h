@@ -14,6 +14,8 @@ class WhileStmt;
 class ReturnStmt;
 class BlockStmt;
 
+class VarDeclStmt;
+
 class Visitor {
 public:
     virtual ~Visitor() = default;
@@ -32,4 +34,6 @@ public:
     virtual void visitWhileStmt(WhileStmt& stmt) = 0;
     virtual void visitReturnStmt(ReturnStmt& stmt) = 0;
     virtual void visitBlockStmt(BlockStmt& stmt) = 0;
+
+    virtual void visitVarDeclStmt(VarDeclStmt& stmt) = 0;
 };

@@ -9,6 +9,9 @@ namespace {
 }
 
 std::unique_ptr<Stmt> Parser::parseStmt() {
+
+    if (match({TokenType::LET}))        return parseVarDeclaration();
+
     if (match({TokenType::IF}))         return parseIfStmt();
     if (match({TokenType::WHILE}))      return parseWhileStmt();
     if (match({TokenType::RETURN}))     return parseReturnStmt();
@@ -85,4 +88,31 @@ std::unique_ptr<BlockStmt> Parser::parseBlock() {
     consume(TokenType::RIGHT_BRACE, "Expected '}' after block.");
 
     return std::make_unique<BlockStmt>(std::move(statements), line, column);
+}   
+std::unique_ptr<Stmt> Parser::parseVarDeclaration() {
+    Token name = consume(TokenType::IDENTIFIER, "Expected variable name.");
+    consume(TokenType::COLON, "Expected ':' after variable name.");
+
+    Type* type = parseType();
+
+    std::unique_ptr<Expr> initializer = nullptr;
+    if (match({TokenType::EQUAL})) {
+        initializer = parseExpression(); // Changed to parseExpression() to match your existing functions
+    }
+
+    consume(TokenType::SEMICOLON, "Expected ';' after variable declaration.");
+    return std::make_unique<VarDeclStmt>(name, type, std::move(initializer));
+}
+
+Type* Parser::parseType() {
+    if (match({TokenType::I32})) return types_.getType(TypeKind::I32);
+    if (match({TokenType::I64})) return types_.getType(TypeKind::I64);
+    if (match({TokenType::U32})) return types_.getType(TypeKind::U32);
+    if (match({TokenType::U64})) return types_.getType(TypeKind::U64);
+    if (match({TokenType::F32})) return types_.getType(TypeKind::F32);
+    if (match({TokenType::F64})) return types_.getType(TypeKind::F64);
+    if (match({TokenType::BOOL})) return types_.getType(TypeKind::BOOL);
+
+    Token bad = peek();
+    throw ParseError("[line " + std::to_string(bad.line_) + "] Expected a valid type.");
 }
