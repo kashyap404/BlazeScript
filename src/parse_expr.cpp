@@ -241,7 +241,7 @@ std::unique_ptr<FuncDefn> Parser::parseFunctionDeclaration() {
 
     // Parse return type (Default to VOID if omitted)
     Type* returnType = types_.getType(TypeKind::VOID);
-    if (match({TokenType::COLON})) {
+    if (match({TokenType::ARROW})) {  
         returnType = parseType();
     }
 

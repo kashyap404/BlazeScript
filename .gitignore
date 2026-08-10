@@ -1,5 +1,7 @@
-echo "blazescript
+blazescript
+a.out
 build/
 *.o
-.DS_Store" > .gitignore
-git add .gitignore
+.DS_Store
+*.swp
+*~
