@@ -27,14 +27,13 @@ public:
 
 class LiteralExpr : public Expr {
 public:
-    LiteralExpr(int value, int line, int column)
-        : Expr(line, column), value(value) {}
-
-    int value;
-
+    using Value = std::variant<int, double, bool, std::string>;
+    LiteralExpr(Value value, int line, int column)
+        : Expr(line, column), value(std::move(value)) {}
+    Value value;
+    
     void accept(Visitor& visitor) override { visitor.visitLiteralExpr(*this); }
 };
-
 class VariableExpr : public Expr  {
     public:
     VariableExpr(Token name, int line, int column)

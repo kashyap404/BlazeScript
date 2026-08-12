@@ -78,7 +78,19 @@ void AstPrinter::print(const Program& program, std::ostream& out) {
 //expressions
 void AstPrinter::visitLiteralExpr(LiteralExpr& expr) {
     indent();
-    *out_ << "Literal " << expr.value << '\n';
+    *out_ << "Literal ";
+
+    if (std::holds_alternative<int>(expr.value)) {
+        *out_ << std::get<int>(expr.value);
+    }  
+    else if (std::holds_alternative<bool>(expr.value)) {
+        *out_ << (std::get<bool>(expr.value) ? "true" : "false");
+    } 
+    else if (std::holds_alternative<std::string>(expr.value)) {
+        *out_ << "\"" << std::get<std::string>(expr.value) << "\"";
+    }
+
+    *out_ << '\n';
 }
 
 void AstPrinter::visitVariableExpr(VariableExpr& expr) {

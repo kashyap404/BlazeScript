@@ -1,21 +1,8 @@
-fn add_ints(a: i32, b: i32) -> i32 {
-    return a + b;
-}
-
-fn do_nothing() {
-    let x: i32 = 0;
-}
-
-fn compute_factorial(n: i32) -> i32 {
-    let result: i32 = 1;
-    let i: i32 = 1;
+fn math_chaos() -> i32 {    
+    let a: i32 = 10;
+    let b: bool = false;
     
-    while (i <= n) {
-        result = result * i;
-        i = i + 1;
-    }
-    
+    // HARSH: Adding an i32 and a bool (Type mismatch in binary expression)
+    let result: i32 = a + b;
     return result;
 }
-
-// (test for single line comments)

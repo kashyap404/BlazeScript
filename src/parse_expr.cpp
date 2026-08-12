@@ -71,6 +71,16 @@ Token Parser::consume(TokenType type, const std::string& message) {
 }
 
 std::unique_ptr<Expr> Parser::primary() {
+    
+    if (match({TokenType::TRUE})) {
+        Token tok = previous();
+        return std::make_unique<LiteralExpr>(true, tok.line_, tok.column_);
+    }
+    if (match({TokenType::FALSE})) {
+        Token tok = previous();
+        return std::make_unique<LiteralExpr>(false, tok.line_, tok.column_);
+    }
+
     if (match({TokenType::NUMBER})) {
         Token tok = previous();
         int value = std::holds_alternative<int>(tok.literal_)

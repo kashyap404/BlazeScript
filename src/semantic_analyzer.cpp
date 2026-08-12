@@ -58,7 +58,15 @@ void SemanticAnalyzer::analyzeFunction(FuncDefn& fn) {
 // expressions
 
 void SemanticAnalyzer::visitLiteralExpr(LiteralExpr& expr) {
-    lastType_ = types_.getType(TypeKind::I32);   
+    if (std::holds_alternative<int>(expr.value)) {
+        lastType_ = types_.getType(TypeKind::I32);
+    }
+    else if (std::holds_alternative<bool>(expr.value)) {
+        lastType_ = types_.getType(TypeKind::BOOL);
+    }
+    else {
+        lastType_ = types_.getType(TypeKind::UNKNOWN);
+    }
 }
 
 void SemanticAnalyzer::visitVariableExpr(VariableExpr& expr) {
