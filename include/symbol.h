@@ -1,6 +1,6 @@
 #pragma once
-#include <string>
 #include "type.h"
+#include <string>
 
 enum class SymbolKind { VARIABLE, FUNCTION, PARAMETER };
 

@@ -12,6 +12,4 @@ TypeTable::TypeTable() {
     table[TypeKind::UNKNOWN] = std::make_unique<Type>(TypeKind::UNKNOWN);
 }
 
-Type* TypeTable::getType(TypeKind kind) {
-    return table[kind].get();
-}
+Type* TypeTable::getType(TypeKind kind) { return table[kind].get(); }

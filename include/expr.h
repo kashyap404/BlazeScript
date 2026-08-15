@@ -1,15 +1,23 @@
 #pragma once
+#include "token.h"
+#include "visitor.h"
 #include <memory>
 #include <vector>
-#include "token.h"
-#include "visitor.h"   
 
 enum class OperatorType {
-    PLUS, MINUS, STAR, SLASH,
-    BANG, AND, OR,
-    EQUAL_EQUAL, BANG_EQUAL,
-    GREATER, GREATER_EQUAL,
-    LESS, LESS_EQUAL
+    PLUS,
+    MINUS,
+    STAR,
+    SLASH,
+    BANG,
+    AND,
+    OR,
+    EQUAL_EQUAL,
+    BANG_EQUAL,
+    GREATER,
+    GREATER_EQUAL,
+    LESS,
+    LESS_EQUAL
 };
 
 OperatorType tokenTypeToOperator(TokenType type);
@@ -22,22 +30,20 @@ public:
     int line;
     int column;
 
-    virtual void accept(Visitor& visitor) = 0;   
+    virtual void accept(Visitor& visitor) = 0;
 };
 
 class LiteralExpr : public Expr {
 public:
     using Value = std::variant<int, double, bool, std::string>;
-    LiteralExpr(Value value, int line, int column)
-        : Expr(line, column), value(std::move(value)) {}
+    LiteralExpr(Value value, int line, int column) : Expr(line, column), value(std::move(value)) {}
     Value value;
-    
+
     void accept(Visitor& visitor) override { visitor.visitLiteralExpr(*this); }
 };
-class VariableExpr : public Expr  {
-    public:
-    VariableExpr(Token name, int line, int column)
-        : Expr(line, column), name(std::move(name)) {}
+class VariableExpr : public Expr {
+public:
+    VariableExpr(Token name, int line, int column) : Expr(line, column), name(std::move(name)) {}
 
     Token name;
 
@@ -57,7 +63,8 @@ public:
 
 class BinaryExpr : public Expr {
 public:
-    BinaryExpr(std::unique_ptr<Expr> left, OperatorType op, std::unique_ptr<Expr> right, int line, int column)
+    BinaryExpr(std::unique_ptr<Expr> left, OperatorType op, std::unique_ptr<Expr> right, int line,
+               int column)
         : Expr(line, column), left(std::move(left)), op(op), right(std::move(right)) {}
 
     std::unique_ptr<Expr> left;
@@ -70,9 +77,7 @@ public:
 class AssignmentExpr : public Expr {
 public:
     AssignmentExpr(std::unique_ptr<Expr> left, std::unique_ptr<Expr> value, int line, int column)
-        : Expr(line, column),
-          left(std::move(left)),
-          value(std::move(value)) {}
+        : Expr(line, column), left(std::move(left)), value(std::move(value)) {}
 
     std::unique_ptr<Expr> left;
     std::unique_ptr<Expr> value;
@@ -82,10 +87,9 @@ public:
 
 class CallExpr : public Expr {
 public:
-    CallExpr(std::unique_ptr<Expr> callee, std::vector<std::unique_ptr<Expr>> arguments, int line, int column)
-        : Expr(line, column),
-          callee(std::move(callee)),
-          arguments(std::move(arguments)) {}
+    CallExpr(std::unique_ptr<Expr> callee, std::vector<std::unique_ptr<Expr>> arguments, int line,
+             int column)
+        : Expr(line, column), callee(std::move(callee)), arguments(std::move(arguments)) {}
 
     std::unique_ptr<Expr> callee;
     std::vector<std::unique_ptr<Expr>> arguments;

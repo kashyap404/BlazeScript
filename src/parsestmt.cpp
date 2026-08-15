@@ -3,19 +3,24 @@
 #include <string>
 
 namespace {
-    struct ParseError : public std::runtime_error {
-        explicit ParseError(const std::string& msg) : std::runtime_error(msg) {}
-    };
-}
+struct ParseError : public std::runtime_error {
+    explicit ParseError(const std::string& msg) : std::runtime_error(msg) {}
+};
+} // namespace
 
 std::unique_ptr<Stmt> Parser::parseStmt() {
 
-    if (match({TokenType::LET}))        return parseVarDeclaration();
+    if (match({TokenType::LET}))
+        return parseVarDeclaration();
 
-    if (match({TokenType::IF}))         return parseIfStmt();
-    if (match({TokenType::WHILE}))      return parseWhileStmt();
-    if (match({TokenType::RETURN}))     return parseReturnStmt();
-    if (match({TokenType::LEFT_BRACE})) return parseBlock();
+    if (match({TokenType::IF}))
+        return parseIfStmt();
+    if (match({TokenType::WHILE}))
+        return parseWhileStmt();
+    if (match({TokenType::RETURN}))
+        return parseReturnStmt();
+    if (match({TokenType::LEFT_BRACE}))
+        return parseBlock();
     return parseExprStmt();
 }
 
@@ -41,11 +46,11 @@ std::unique_ptr<Stmt> Parser::parseIfStmt() {
     std::unique_ptr<Stmt> thenBranch = parseStmt();
     std::unique_ptr<Stmt> elseBranch = nullptr;
     if (match({TokenType::ELSE})) {
-        elseBranch = parseStmt(); 
+        elseBranch = parseStmt();
     }
 
     return std::make_unique<IfStmt>(std::move(condition), std::move(thenBranch),
-      std::move(elseBranch), line, column);
+                                    std::move(elseBranch), line, column);
 }
 
 std::unique_ptr<Stmt> Parser::parseWhileStmt() {
@@ -88,7 +93,7 @@ std::unique_ptr<BlockStmt> Parser::parseBlock() {
     consume(TokenType::RIGHT_BRACE, "Expected '}' after block.");
 
     return std::make_unique<BlockStmt>(std::move(statements), line, column);
-}   
+}
 std::unique_ptr<Stmt> Parser::parseVarDeclaration() {
     Token name = consume(TokenType::IDENTIFIER, "Expected variable name.");
     consume(TokenType::COLON, "Expected ':' after variable name.");
@@ -97,7 +102,8 @@ std::unique_ptr<Stmt> Parser::parseVarDeclaration() {
 
     std::unique_ptr<Expr> initializer = nullptr;
     if (match({TokenType::EQUAL})) {
-        initializer = parseExpression(); // Changed to parseExpression() to match your existing functions
+        initializer =
+            parseExpression(); // Changed to parseExpression() to match your existing functions
     }
 
     consume(TokenType::SEMICOLON, "Expected ';' after variable declaration.");
@@ -105,13 +111,20 @@ std::unique_ptr<Stmt> Parser::parseVarDeclaration() {
 }
 
 Type* Parser::parseType() {
-    if (match({TokenType::I32})) return types_.getType(TypeKind::I32);
-    if (match({TokenType::I64})) return types_.getType(TypeKind::I64);
-    if (match({TokenType::U32})) return types_.getType(TypeKind::U32);
-    if (match({TokenType::U64})) return types_.getType(TypeKind::U64);
-    if (match({TokenType::F32})) return types_.getType(TypeKind::F32);
-    if (match({TokenType::F64})) return types_.getType(TypeKind::F64);
-    if (match({TokenType::BOOL})) return types_.getType(TypeKind::BOOL);
+    if (match({TokenType::I32}))
+        return types_.getType(TypeKind::I32);
+    if (match({TokenType::I64}))
+        return types_.getType(TypeKind::I64);
+    if (match({TokenType::U32}))
+        return types_.getType(TypeKind::U32);
+    if (match({TokenType::U64}))
+        return types_.getType(TypeKind::U64);
+    if (match({TokenType::F32}))
+        return types_.getType(TypeKind::F32);
+    if (match({TokenType::F64}))
+        return types_.getType(TypeKind::F64);
+    if (match({TokenType::BOOL}))
+        return types_.getType(TypeKind::BOOL);
 
     Token bad = peek();
     throw ParseError("[line " + std::to_string(bad.line_) + "] Expected a valid type.");

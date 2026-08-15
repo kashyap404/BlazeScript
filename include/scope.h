@@ -1,13 +1,13 @@
 #pragma once
+#include "symbol.h"
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <memory>
-#include "symbol.h"
 
 class SymbolTable {
 public:
-    SymbolTable(); // Pushes global scope 
+    SymbolTable(); // Pushes global scope
 
     void beginScope();
     void endScope();

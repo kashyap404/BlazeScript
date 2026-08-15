@@ -1,8 +1,8 @@
 #pragma once
-#include <string>
-#include <vector>
-#include <unordered_map>
 #include "token.h"
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 class Scanner {
 public:
@@ -33,5 +33,4 @@ private:
     int line_ = 1;
     int column_ = 1;
     int start_column_ = 1;
-
-};      
+};

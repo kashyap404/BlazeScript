@@ -1,5 +1,5 @@
 #include "ast_printer.h"
-#include<iostream>
+#include <iostream>
 
 void AstPrinter::indent() {
     for (int i = 0; i < depth_; ++i) {
@@ -15,20 +15,48 @@ void AstPrinter::emit(const char* text) {
 void AstPrinter::emitOperator(OperatorType op) {
     indent();
     switch (op) {
-        case OperatorType::PLUS:          *out_ << '+';  break;
-        case OperatorType::MINUS:         *out_ << '-';  break;
-        case OperatorType::STAR:          *out_ << '*';  break;
-        case OperatorType::SLASH:         *out_ << '/';  break;
-        case OperatorType::BANG:          *out_ << '!';  break;
-        case OperatorType::AND:           *out_ << "and"; break;
-        case OperatorType::OR:            *out_ << "or";  break;
-        case OperatorType::EQUAL_EQUAL:   *out_ << "=="; break;
-        case OperatorType::BANG_EQUAL:    *out_ << "!="; break;
-        case OperatorType::GREATER:       *out_ << '>';  break;
-        case OperatorType::GREATER_EQUAL: *out_ << ">="; break;
-        case OperatorType::LESS:          *out_ << '<';  break;
-        case OperatorType::LESS_EQUAL:    *out_ << "<="; break;
-        default:                          *out_ << '?';  break;
+    case OperatorType::PLUS:
+        *out_ << '+';
+        break;
+    case OperatorType::MINUS:
+        *out_ << '-';
+        break;
+    case OperatorType::STAR:
+        *out_ << '*';
+        break;
+    case OperatorType::SLASH:
+        *out_ << '/';
+        break;
+    case OperatorType::BANG:
+        *out_ << '!';
+        break;
+    case OperatorType::AND:
+        *out_ << "and";
+        break;
+    case OperatorType::OR:
+        *out_ << "or";
+        break;
+    case OperatorType::EQUAL_EQUAL:
+        *out_ << "==";
+        break;
+    case OperatorType::BANG_EQUAL:
+        *out_ << "!=";
+        break;
+    case OperatorType::GREATER:
+        *out_ << '>';
+        break;
+    case OperatorType::GREATER_EQUAL:
+        *out_ << ">=";
+        break;
+    case OperatorType::LESS:
+        *out_ << '<';
+        break;
+    case OperatorType::LESS_EQUAL:
+        *out_ << "<=";
+        break;
+    default:
+        *out_ << '?';
+        break;
     }
     *out_ << '\n';
 }
@@ -75,18 +103,16 @@ void AstPrinter::print(const Program& program, std::ostream& out) {
     }
 }
 
-//expressions
+// expressions
 void AstPrinter::visitLiteralExpr(LiteralExpr& expr) {
     indent();
     *out_ << "Literal ";
 
     if (std::holds_alternative<int>(expr.value)) {
         *out_ << std::get<int>(expr.value);
-    }  
-    else if (std::holds_alternative<bool>(expr.value)) {
+    } else if (std::holds_alternative<bool>(expr.value)) {
         *out_ << (std::get<bool>(expr.value) ? "true" : "false");
-    } 
-    else if (std::holds_alternative<std::string>(expr.value)) {
+    } else if (std::holds_alternative<std::string>(expr.value)) {
         *out_ << "\"" << std::get<std::string>(expr.value) << "\"";
     }
 
@@ -133,7 +159,7 @@ void AstPrinter::visitCallExpr(CallExpr& expr) {
     depth_--;
 }
 
-// statements 
+// statements
 
 void AstPrinter::visitExpressionStmt(ExpressionStmt& stmt) {
     emit("ExpressionStmt");
@@ -202,11 +228,10 @@ void AstPrinter::visitBlockStmt(BlockStmt& stmt) {
 void AstPrinter::visitVarDeclStmt(VarDeclStmt& stmt) {
 
     for (int i = 0; i < depth_; ++i) {
-        std::cout << "  "; 
+        std::cout << "  ";
     }
-  
+
     std::cout << "VarDecl: " << stmt.name.lexeme_ << "\n";
-    
 
     if (stmt.initializer) {
         depth_++;

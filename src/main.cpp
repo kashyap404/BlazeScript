@@ -1,11 +1,11 @@
+#include <cstring>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <cstring>
 
-#include "scanner.h"
-#include "parser.h"
 #include "ast_printer.h"
+#include "parser.h"
+#include "scanner.h"
 #include "semantic_analyzer.h"
 
 void printUsage(const char* programName) {
@@ -18,34 +18,29 @@ void printUsage(const char* programName) {
 }
 
 int main(int argc, char* argv[]) {
-    bool printTokens   = false;
-    bool printAst      = false;
-    bool runSemantic   = false;
+    bool printTokens = false;
+    bool printAst = false;
+    bool runSemantic = false;
     std::string filename;
 
-    //parse args
+    // parse args
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
 
         if (arg == "-t" || arg == "--tokens") {
             printTokens = true;
-        }
-        else if (arg == "-ast" || arg == "--ast") {
+        } else if (arg == "-ast" || arg == "--ast") {
             printAst = true;
-        }
-        else if (arg == "-s" || arg == "--semantic") {
+        } else if (arg == "-s" || arg == "--semantic") {
             runSemantic = true;
-        }
-        else if (arg == "-h" || arg == "--help") {
+        } else if (arg == "-h" || arg == "--help") {
             printUsage(argv[0]);
             return 0;
-        }
-        else if (arg[0] == '-') {
+        } else if (arg[0] == '-') {
             std::cerr << "Unknown option: " << arg << "\n";
             printUsage(argv[0]);
             return 1;
-        }
-        else {
+        } else {
             if (!filename.empty()) {
                 std::cerr << "Only one input file is allowed.\n";
                 return 1;
@@ -80,11 +75,9 @@ int main(int argc, char* argv[]) {
 
     try {
         program = parser.parse();
-        std::cout << "Parsing succeeded: "
-                  << program.statements.size() << " statement(s), "
+        std::cout << "Parsing succeeded: " << program.statements.size() << " statement(s), "
                   << program.functions.size() << " function(s).\n\n";
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         std::cerr << "Parsing failed: " << e.what() << "\n";
         return 1;
     }

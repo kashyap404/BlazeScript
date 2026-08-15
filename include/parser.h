@@ -1,12 +1,12 @@
 #pragma once
 
-#include <vector>
-#include <memory>
 #include <initializer_list>
+#include <memory>
+#include <vector>
 
-#include "token.h"
 #include "expr.h"
 #include "stmt.h"
+#include "token.h"
 
 #include "function.h"
 

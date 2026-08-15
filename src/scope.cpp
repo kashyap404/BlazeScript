@@ -1,8 +1,6 @@
 #include "scope.h"
 
-SymbolTable::SymbolTable() {
-    beginScope();
-}
+SymbolTable::SymbolTable() { beginScope(); }
 
 void SymbolTable::beginScope() {
     scopes_.push_back(std::unordered_map<std::string, std::unique_ptr<Symbol>>());
@@ -15,13 +13,14 @@ void SymbolTable::endScope() {
 }
 
 bool SymbolTable::declare(std::unique_ptr<Symbol> symbol) {
-    if (scopes_.empty()) return false;
-    
+    if (scopes_.empty())
+        return false;
+
     auto& currentScope = scopes_.back();
     if (currentScope.find(symbol->name) != currentScope.end()) {
         return false;
     }
-    
+
     currentScope[symbol->name] = std::move(symbol);
     return true;
 }
@@ -37,6 +36,7 @@ Symbol* SymbolTable::resolve(const std::string& name) const {
 }
 
 bool SymbolTable::isDeclaredInCurrentScope(const std::string& name) const {
-    if (scopes_.empty()) return false;
+    if (scopes_.empty())
+        return false;
     return scopes_.back().find(name) != scopes_.back().end();
 }
