@@ -1,8 +1,7 @@
-fn math_chaos() -> i32 {    
-    let a: i32 = 10;
-    let b: bool = false;
-    
-    // HARSH: Adding an i32 and a bool (Type mismatch in binary expression)
-    let result: i32 = a + b;
-    return result;
+fn add(a: i32, b: i32) -> i32 {
+    return a + b;
+}
+fn main() -> i32 {
+    let x: i32 = add(10);   
+    return true;             
 }

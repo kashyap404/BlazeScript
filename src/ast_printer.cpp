@@ -226,12 +226,8 @@ void AstPrinter::visitBlockStmt(BlockStmt& stmt) {
     depth_--;
 }
 void AstPrinter::visitVarDeclStmt(VarDeclStmt& stmt) {
-
-    for (int i = 0; i < depth_; ++i) {
-        std::cout << "  ";
-    }
-
-    std::cout << "VarDecl: " << stmt.name.lexeme_ << "\n";
+    indent();
+    *out_ << "VarDecl: " << stmt.name.lexeme_ << '\n';
 
     if (stmt.initializer) {
         depth_++;
