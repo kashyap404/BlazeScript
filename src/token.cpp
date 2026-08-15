@@ -4,8 +4,7 @@
 
 std::string Token::toString() const {
     std::ostringstream out;
-    out << "[line " << line_ << ", col " << column_ << "] "
-        << tokenTypeToString(type_) << "  "
+    out << "[line " << line_ << ", col " << column_ << "] " << tokenTypeToString(type_) << "  "
         << lexeme_ << " -> ";
 
     if (std::holds_alternative<int>(literal_)) {

@@ -1,0 +1,16 @@
+// 1. Tests global scope and variable declaration parsing
+let my_global: i32 = 100;
+
+// 2. Tests parameter types, return types, and function scope
+fn calculate(x: i32, flag: bool): i32 {
+    
+    // 3. Tests local scope checking
+    let local_var: i32 = 5;
+
+    // 4. Tests scope shadowing (vector of hash maps)
+    {
+        let local_var: i32 = 999; // Should be allowed in this inner scope
+    }
+
+    return local_var;
+}

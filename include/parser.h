@@ -1,12 +1,12 @@
 #pragma once
 
-#include <vector>
-#include <memory>
 #include <initializer_list>
+#include <memory>
+#include <vector>
 
-#include "token.h"
 #include "expr.h"
 #include "stmt.h"
+#include "token.h"
 
 #include "function.h"
 
@@ -44,6 +44,9 @@ private:
     std::unique_ptr<Stmt> parseReturnStmt();
     std::unique_ptr<BlockStmt> parseBlock();
 
+    std::unique_ptr<Stmt> parseVarDeclaration();
+    Type* parseType();
+
     // Functions
     std::unique_ptr<FuncDefn> parseFunctionDeclaration();
 
@@ -57,4 +60,5 @@ private:
 
     std::vector<Token> tokens_;
     std::size_t current_ = 0;
+    TypeTable types_;
 };

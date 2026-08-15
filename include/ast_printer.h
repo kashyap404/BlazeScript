@@ -1,9 +1,9 @@
 #pragma once
-#include "visitor.h"
 #include "expr.h"
-#include "stmt.h"
 #include "function.h"
-#include "parser.h"   
+#include "parser.h"
+#include "stmt.h"
+#include "visitor.h"
 #include <ostream>
 
 class AstPrinter : public Visitor {
@@ -26,9 +26,11 @@ public:
     void visitReturnStmt(ReturnStmt& stmt) override;
     void visitBlockStmt(BlockStmt& stmt) override;
 
+    void visitVarDeclStmt(VarDeclStmt& stmt) override;
+
 private:
-    void indent();                    
-    void emit(const char* text);  
+    void indent();
+    void emit(const char* text);
     void emitOperator(OperatorType op);
     void printFuncDefn(const FuncDefn& fn);
 
