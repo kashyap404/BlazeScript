@@ -2,7 +2,6 @@
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/raw_ostream.h>
-
 #include <iostream>
 #include <variant>
 
@@ -87,51 +86,51 @@ void CodeGen::visitBinaryExpr(BinaryExpr& expr) {
 
     switch (expr.op) {
     case OperatorType::PLUS:
-        lastValue_ = builder_.CreateAdd(left, right, "addtmp");
+        lastValue_ = builder_.CreateAdd(left, right, "add");
         break;
 
     case OperatorType::MINUS:
-        lastValue_ = builder_.CreateSub(left, right, "subtmp");
+        lastValue_ = builder_.CreateSub(left, right, "sub");
         break;
 
     case OperatorType::STAR:
-        lastValue_ = builder_.CreateMul(left, right, "multmp");
+        lastValue_ = builder_.CreateMul(left, right, "mult");
         break;
 
     case OperatorType::SLASH:
-        lastValue_ = builder_.CreateSDiv(left, right, "divtmp");
+        lastValue_ = builder_.CreateSDiv(left, right, "div");
         break;
 
     case OperatorType::EQUAL_EQUAL:
-        lastValue_ = builder_.CreateICmpEQ(left, right, "eqtmp");
+        lastValue_ = builder_.CreateICmpEQ(left, right, "eq");
         break;
 
     case OperatorType::BANG_EQUAL:
-        lastValue_ = builder_.CreateICmpNE(left, right, "netmp");
+        lastValue_ = builder_.CreateICmpNE(left, right, "net");
         break;
 
     case OperatorType::LESS:
-        lastValue_ = builder_.CreateICmpSLT(left, right, "lttmp");
+        lastValue_ = builder_.CreateICmpSLT(left, right, "ltt");
         break;
 
     case OperatorType::LESS_EQUAL:
-        lastValue_ = builder_.CreateICmpSLE(left, right, "letmp");
+        lastValue_ = builder_.CreateICmpSLE(left, right, "leq");
         break;
 
     case OperatorType::GREATER:
-        lastValue_ = builder_.CreateICmpSGT(left, right, "gttmp");
+        lastValue_ = builder_.CreateICmpSGT(left, right, "gtt");
         break;
 
     case OperatorType::GREATER_EQUAL:
-        lastValue_ = builder_.CreateICmpSGE(left, right, "getmp");
+        lastValue_ = builder_.CreateICmpSGE(left, right, "geq");
         break;
 
     case OperatorType::AND:
-        lastValue_ = builder_.CreateAnd(left, right, "andtmp");
+        lastValue_ = builder_.CreateAnd(left, right, "and");
         break;
 
     case OperatorType::OR:
-        lastValue_ = builder_.CreateOr(left, right, "ortmp");
+        lastValue_ = builder_.CreateOr(left, right, "or");
         break;
 
     default:
