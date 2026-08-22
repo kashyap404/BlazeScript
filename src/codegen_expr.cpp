@@ -1,9 +1,10 @@
 #include "codegen.h"
+#include <iostream>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/raw_ostream.h>
-#include <iostream>
 #include <variant>
+#include <vector>
 
 CodeGen::CodeGen()
     : module_(std::make_unique<llvm::Module>("blazescript", context_)), builder_(context_) {}
@@ -39,6 +40,7 @@ void CodeGen::visitVariableExpr(VariableExpr& expr) {
     llvm::AllocaInst* alloca = lookupValue(expr.name.lexeme_);
 
     if (!alloca) {
+        std::cerr << "codegen error: undefined variable '" << expr.name.lexeme_ << "'\n";
         lastValue_ = nullptr;
         return;
     }
@@ -58,12 +60,12 @@ void CodeGen::visitUnaryExpr(UnaryExpr& expr) {
 
     switch (expr.op) {
     case OperatorType::MINUS:
-        lastValue_ = builder_.CreateNeg(operand, "negtmp");
+        lastValue_ = builder_.CreateNeg(operand, "neg");
         break;
 
     case OperatorType::BANG:
-        lastValue_ = builder_.CreateICmpEQ(
-            operand, llvm::Constant::getNullValue(operand->getType()), "nottmp");
+        lastValue_ =
+            builder_.CreateICmpEQ(operand, llvm::Constant::getNullValue(operand->getType()), "not");
         break;
 
     default:
@@ -94,7 +96,7 @@ void CodeGen::visitBinaryExpr(BinaryExpr& expr) {
         break;
 
     case OperatorType::STAR:
-        lastValue_ = builder_.CreateMul(left, right, "mult");
+        lastValue_ = builder_.CreateMul(left, right, "mul");
         break;
 
     case OperatorType::SLASH:
@@ -106,23 +108,23 @@ void CodeGen::visitBinaryExpr(BinaryExpr& expr) {
         break;
 
     case OperatorType::BANG_EQUAL:
-        lastValue_ = builder_.CreateICmpNE(left, right, "net");
+        lastValue_ = builder_.CreateICmpNE(left, right, "neq");
         break;
 
     case OperatorType::LESS:
-        lastValue_ = builder_.CreateICmpSLT(left, right, "ltt");
+        lastValue_ = builder_.CreateICmpSLT(left, right, "lt");
         break;
 
     case OperatorType::LESS_EQUAL:
-        lastValue_ = builder_.CreateICmpSLE(left, right, "leq");
+        lastValue_ = builder_.CreateICmpSLE(left, right, "le");
         break;
 
     case OperatorType::GREATER:
-        lastValue_ = builder_.CreateICmpSGT(left, right, "gtt");
+        lastValue_ = builder_.CreateICmpSGT(left, right, "gt");
         break;
 
     case OperatorType::GREATER_EQUAL:
-        lastValue_ = builder_.CreateICmpSGE(left, right, "geq");
+        lastValue_ = builder_.CreateICmpSGE(left, right, "ge");
         break;
 
     case OperatorType::AND:
@@ -137,4 +139,76 @@ void CodeGen::visitBinaryExpr(BinaryExpr& expr) {
         lastValue_ = nullptr;
         break;
     }
+}
+
+void CodeGen::visitAssignmentExpr(AssignmentExpr& expr) {
+    auto* variable = dynamic_cast<VariableExpr*>(expr.left.get());
+
+    if (!variable) {
+        std::cerr << "codegen error: assignment target is not a variable\n";
+        lastValue_ = nullptr;
+        return;
+    }
+
+    llvm::AllocaInst* alloca = lookupValue(variable->name.lexeme_);
+
+    if (!alloca) {
+        std::cerr << "codegen error: undefined variable '" << variable->name.lexeme_ << "'\n";
+        lastValue_ = nullptr;
+        return;
+    }
+
+    expr.value->accept(*this);
+
+    llvm::Value* value = lastValue_;
+
+    if (!value) {
+        lastValue_ = nullptr;
+        return;
+    }
+
+    builder_.CreateStore(value, alloca);
+    lastValue_ = value;
+}
+
+void CodeGen::visitCallExpr(CallExpr& expr) {
+    auto* variable = dynamic_cast<VariableExpr*>(expr.callee.get());
+
+    if (!variable) {
+        std::cerr << "codegen error: unsupported callee\n";
+        lastValue_ = nullptr;
+        return;
+    }
+
+    llvm::Function* callee = module_->getFunction(variable->name.lexeme_);
+
+    if (!callee) {
+        std::cerr << "codegen error: unknown function '" << variable->name.lexeme_ << "'\n";
+        lastValue_ = nullptr;
+        return;
+    }
+
+    std::vector<llvm::Value*> args;
+
+    for (auto& argument : expr.arguments) {
+        argument->accept(*this);
+
+        llvm::Value* value = lastValue_;
+
+        if (!value) {
+            lastValue_ = nullptr;
+            return;
+        }
+
+        args.push_back(value);
+    }
+
+    if (args.size() != callee->arg_size()) {
+        std::cerr << "codegen error: incorrect number of arguments for '" << variable->name.lexeme_
+                  << "'\n";
+        lastValue_ = nullptr;
+        return;
+    }
+
+    lastValue_ = builder_.CreateCall(callee, args, "call");
 }
