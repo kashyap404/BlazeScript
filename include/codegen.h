@@ -38,14 +38,12 @@ private:
     llvm::LLVMContext context_;
     std::unique_ptr<llvm::Module> module_;
     llvm::IRBuilder<> builder_;
-
     llvm::Value* lastValue_ = nullptr;
-
     std::map<std::string, llvm::AllocaInst*> values_;
+
     llvm::AllocaInst* lookupValue(const std::string& name) const;
-
     llvm::Type* toLLVMType(Type* type);
-
     llvm::AllocaInst* createEntryBlockAlloca(llvm::Function* function, llvm::Type* type,
                                              const std::string& varName);
+    llvm::Value* toBoolValue(llvm::Value* value);
 };

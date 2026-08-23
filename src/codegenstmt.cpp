@@ -1,5 +1,6 @@
 #include "codegen.h"
 
+#include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constants.h>
 
 #include <iostream>
@@ -50,7 +51,7 @@ void CodeGen::visitReturnStmt(ReturnStmt& stmt) {
     llvm::Value* retVal = lastValue_;
 
     if (!retVal) {
-        std::cerr << "error: empty return value at line " << stmt.line << "\n";
+        std::cerr << "error: empty return value at line " << stmt.line << ")\n";
         return;
     }
 
@@ -68,12 +69,104 @@ void CodeGen::visitVarDeclStmt(VarDeclStmt& stmt) {
         llvm::Value* initVal = lastValue_;
 
         if (!initVal) {
-            std::cerr << "error: null initializer for '" << stmt.name.lexeme_ << "' at line "
-                      << stmt.line << "\n";
+            std::cerr << "codegen error: initializer for '" << stmt.name.lexeme_
+                      << "' produced no value (line " << stmt.line << ")\n";
         } else {
             builder_.CreateStore(initVal, alloca);
         }
     }
 
     values_[stmt.name.lexeme_] = alloca;
+}
+
+void CodeGen::visitBlockStmt(BlockStmt& stmt) {
+    for (auto& s : stmt.statements) {
+        s->accept(*this);
+        if (builder_.GetInsertBlock()->getTerminator()) {
+            break;
+        }
+    }
+}
+
+llvm::Value* CodeGen::toBoolValue(llvm::Value* value) {
+    if (!value) {
+        return nullptr;
+    }
+
+    llvm::Type* ty = value->getType();
+    if (ty->isIntegerTy(1)) {
+        return value;
+    }
+    if (ty->isIntegerTy()) {
+        return builder_.CreateICmpNE(value, llvm::ConstantInt::get(ty, 0), "cond");
+    }
+    if (ty->isFloatingPointTy()) {
+        return builder_.CreateFCmpONE(value, llvm::ConstantFP::get(ty, 0.0), "cond");
+    }
+
+    std::cerr << "codegen error: condition does not have a boolean or numeric type\n";
+    return nullptr;
+}
+
+void CodeGen::visitIfStmt(IfStmt& stmt) {
+    stmt.condition->accept(*this);
+    llvm::Value* condVal = toBoolValue(lastValue_);
+    if (!condVal) {
+        std::cerr << "codegen error: if condition produced no value (line " << stmt.line << ")\n";
+        return;
+    }
+
+    llvm::Function* function = builder_.GetInsertBlock()->getParent();
+    llvm::BasicBlock* thenBB = llvm::BasicBlock::Create(context_, "then", function);
+    llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(context_, "ifcont");
+    llvm::BasicBlock* elseBB =
+        stmt.elseBranch ? llvm::BasicBlock::Create(context_, "else") : mergeBB;
+
+    builder_.CreateCondBr(condVal, thenBB, elseBB);
+
+    builder_.SetInsertPoint(thenBB);
+    stmt.thenBranch->accept(*this);
+    if (!builder_.GetInsertBlock()->getTerminator()) {
+        builder_.CreateBr(mergeBB);
+    }
+
+    if (stmt.elseBranch) {
+        function->insert(function->end(), elseBB);
+        builder_.SetInsertPoint(elseBB);
+        stmt.elseBranch->accept(*this);
+        if (!builder_.GetInsertBlock()->getTerminator()) {
+            builder_.CreateBr(mergeBB);
+        }
+    }
+
+    function->insert(function->end(), mergeBB);
+    builder_.SetInsertPoint(mergeBB);
+}
+
+void CodeGen::visitWhileStmt(WhileStmt& stmt) {
+    llvm::Function* function = builder_.GetInsertBlock()->getParent();
+
+    llvm::BasicBlock* condBB = llvm::BasicBlock::Create(context_, "whilecond", function);
+    llvm::BasicBlock* loopBB = llvm::BasicBlock::Create(context_, "whilebody");
+    llvm::BasicBlock* afterBB = llvm::BasicBlock::Create(context_, "whileend");
+
+    builder_.CreateBr(condBB);
+    builder_.SetInsertPoint(condBB);
+    stmt.condition->accept(*this);
+    llvm::Value* condVal = toBoolValue(lastValue_);
+    if (!condVal) {
+        std::cerr << "codegen error: while condition produced no value (line " << stmt.line
+                  << ")\n";
+        return;
+    }
+    builder_.CreateCondBr(condVal, loopBB, afterBB);
+
+    function->insert(function->end(), loopBB);
+    builder_.SetInsertPoint(loopBB);
+    stmt.body->accept(*this);
+    if (!builder_.GetInsertBlock()->getTerminator()) {
+        builder_.CreateBr(condBB);
+    }
+    function->insert(function->end(), afterBB);
+    builder_.SetInsertPoint(afterBB);
 }
