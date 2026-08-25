@@ -28,6 +28,8 @@ add_executable(blazescript
     src/token.cpp
     src/type.cpp
     src/codegen_expr.cpp
+    src/codegenstmt.cpp
+    src/codegen_func.cpp
 )
 
 target_include_directories(blazescript PRIVATE

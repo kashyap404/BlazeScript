@@ -5,38 +5,12 @@
 
 #include <iostream>
 
-llvm::Type* CodeGen::toLLVMType(Type* type) {
-    if (!type) {
-        std::cerr << "error: no type info for declaration, cant generate a valid alloca\n";
-        return llvm::Type::getVoidTy(context_);
-    }
 
-    switch (type->kind) {
-    case TypeKind::I32:
-    case TypeKind::U32:
-        return llvm::Type::getInt32Ty(context_);
-    case TypeKind::I64:
-    case TypeKind::U64:
-        return llvm::Type::getInt64Ty(context_);
-    case TypeKind::F32:
-        return llvm::Type::getFloatTy(context_);
-    case TypeKind::F64:
-        return llvm::Type::getDoubleTy(context_);
-    case TypeKind::BOOL:
-        return llvm::Type::getInt1Ty(context_);
-    case TypeKind::VOID:
-        return llvm::Type::getVoidTy(context_);
-    case TypeKind::UNKNOWN:
-    default:
-        std::cerr << "error: unknown type, defaulting to i32\n";
-        return llvm::Type::getInt32Ty(context_);
-    }
-}
+llvm::AllocaInst* CodeGen::createEntryBlockAlloca(llvm::Function* function,
+                                                  const std::string& varName, llvm::Type* type) {
+    llvm::IRBuilder<> builder(&function->getEntryBlock(), function->getEntryBlock().begin());
 
-llvm::AllocaInst* CodeGen::createEntryBlockAlloca(llvm::Function* function, llvm::Type* type,
-                                                  const std::string& varName) {
-    llvm::IRBuilder<> entryBuilder(&function->getEntryBlock(), function->getEntryBlock().begin());
-    return entryBuilder.CreateAlloca(type, nullptr, varName);
+    return builder.CreateAlloca(type, nullptr, varName);
 }
 
 void CodeGen::visitExpressionStmt(ExpressionStmt& stmt) { stmt.expression->accept(*this); }
@@ -62,7 +36,7 @@ void CodeGen::visitVarDeclStmt(VarDeclStmt& stmt) {
     llvm::Type* varTy = toLLVMType(stmt.type);
 
     llvm::Function* currentFunction = builder_.GetInsertBlock()->getParent();
-    llvm::AllocaInst* alloca = createEntryBlockAlloca(currentFunction, varTy, stmt.name.lexeme_);
+    llvm::AllocaInst* alloca = createEntryBlockAlloca(currentFunction, stmt.name.lexeme_, varTy);
 
     if (stmt.initializer) {
         stmt.initializer->accept(*this);
@@ -82,6 +56,7 @@ void CodeGen::visitVarDeclStmt(VarDeclStmt& stmt) {
 void CodeGen::visitBlockStmt(BlockStmt& stmt) {
     for (auto& s : stmt.statements) {
         s->accept(*this);
+
         if (builder_.GetInsertBlock()->getTerminator()) {
             break;
         }
@@ -91,14 +66,18 @@ void CodeGen::visitBlockStmt(BlockStmt& stmt) {
 void CodeGen::visitIfStmt(IfStmt& stmt) {
     stmt.condition->accept(*this);
     llvm::Value* condVal = lastValue_;
+
     if (!condVal) {
         std::cerr << "error: if condition didn't produce a value (line " << stmt.line << ")\n";
         return;
     }
 
     llvm::Function* function = builder_.GetInsertBlock()->getParent();
+
     llvm::BasicBlock* thenBB = llvm::BasicBlock::Create(context_, "then", function);
+
     llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(context_, "ifcont");
+
     llvm::BasicBlock* elseBB =
         stmt.elseBranch ? llvm::BasicBlock::Create(context_, "else") : mergeBB;
 
@@ -106,14 +85,17 @@ void CodeGen::visitIfStmt(IfStmt& stmt) {
 
     builder_.SetInsertPoint(thenBB);
     stmt.thenBranch->accept(*this);
+
     if (!builder_.GetInsertBlock()->getTerminator()) {
         builder_.CreateBr(mergeBB);
     }
 
     if (stmt.elseBranch) {
         function->insert(function->end(), elseBB);
+
         builder_.SetInsertPoint(elseBB);
         stmt.elseBranch->accept(*this);
+
         if (!builder_.GetInsertBlock()->getTerminator()) {
             builder_.CreateBr(mergeBB);
         }
@@ -127,25 +109,35 @@ void CodeGen::visitWhileStmt(WhileStmt& stmt) {
     llvm::Function* function = builder_.GetInsertBlock()->getParent();
 
     llvm::BasicBlock* condBB = llvm::BasicBlock::Create(context_, "whilecond", function);
+
     llvm::BasicBlock* loopBB = llvm::BasicBlock::Create(context_, "whilebody");
+
     llvm::BasicBlock* afterBB = llvm::BasicBlock::Create(context_, "whileend");
 
     builder_.CreateBr(condBB);
+
     builder_.SetInsertPoint(condBB);
+
     stmt.condition->accept(*this);
     llvm::Value* condVal = lastValue_;
+
     if (!condVal) {
         std::cerr << "error: while condition didn't produce a value (line " << stmt.line << ")\n";
         return;
     }
+
     builder_.CreateCondBr(condVal, loopBB, afterBB);
 
     function->insert(function->end(), loopBB);
+
     builder_.SetInsertPoint(loopBB);
     stmt.body->accept(*this);
+
     if (!builder_.GetInsertBlock()->getTerminator()) {
         builder_.CreateBr(condBB);
     }
+
     function->insert(function->end(), afterBB);
+
     builder_.SetInsertPoint(afterBB);
 }
