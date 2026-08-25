@@ -1,23 +1,22 @@
 #pragma once
-
 #include "expr.h"
+#include "function.h"
+#include "parser.h"
 #include "stmt.h"
 #include "type.h"
 #include "visitor.h"
-
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Value.h>
-
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 class CodeGen : public Visitor {
 public:
     CodeGen();
-
+    void generate(Program& program);
     void dump() const;
 
     void visitLiteralExpr(LiteralExpr& expr) override;
@@ -38,11 +37,19 @@ private:
     llvm::LLVMContext context_;
     std::unique_ptr<llvm::Module> module_;
     llvm::IRBuilder<> builder_;
+    llvm::Function* currentFunction_ = nullptr;
+    std::unordered_map<std::string, llvm::AllocaInst*> values_;
     llvm::Value* lastValue_ = nullptr;
-    std::map<std::string, llvm::AllocaInst*> values_;
+    llvm::Type* toLLVMType(Type* type);
+
+    llvm::AllocaInst* createEntryBlockAlloca(llvm::Function* fn, const std::string& name,
+                                             llvm::Type* type);
 
     llvm::AllocaInst* lookupValue(const std::string& name) const;
-    llvm::Type* toLLVMType(Type* type);
-    llvm::AllocaInst* createEntryBlockAlloca(llvm::Function* function, llvm::Type* type,
-                                             const std::string& varName);
+
+    void generateFunction(FuncDefn& fn);
+
+    void error(int line, int column, const std::string& message);
+
+    bool hadError_ = false;
 };
