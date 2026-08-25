@@ -6,7 +6,7 @@ namespace {
 struct ParseError : public std::runtime_error {
     explicit ParseError(const std::string& msg) : std::runtime_error(msg) {}
 };
-} // namespace
+} 
 
 OperatorType tokenTypeToOperator(TokenType type) {
     switch (type) {
