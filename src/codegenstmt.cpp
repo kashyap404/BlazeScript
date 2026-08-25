@@ -7,8 +7,8 @@
 
 llvm::Type* CodeGen::toLLVMType(Type* type) {
     if (!type) {
-        std::cerr << "warning: missing type in declaration, defaulting to i32\n";
-        return llvm::Type::getInt32Ty(context_);
+        std::cerr << "error: no type info for declaration, cant generate a valid alloca\n";
+        return llvm::Type::getVoidTy(context_);
     }
 
     switch (type->kind) {
@@ -51,7 +51,7 @@ void CodeGen::visitReturnStmt(ReturnStmt& stmt) {
     llvm::Value* retVal = lastValue_;
 
     if (!retVal) {
-        std::cerr << "error: empty return value at line " << stmt.line << ")\n";
+        std::cerr << "error: empty return value at line " << stmt.line << "\n";
         return;
     }
 
@@ -69,8 +69,8 @@ void CodeGen::visitVarDeclStmt(VarDeclStmt& stmt) {
         llvm::Value* initVal = lastValue_;
 
         if (!initVal) {
-            std::cerr << "codegen error: initializer for '" << stmt.name.lexeme_
-                      << "' produced no value (line " << stmt.line << ")\n";
+            std::cerr << "error: initializer for '" << stmt.name.lexeme_
+                      << "' didn't produce a value (line " << stmt.line << ")\n";
         } else {
             builder_.CreateStore(initVal, alloca);
         }
@@ -88,31 +88,11 @@ void CodeGen::visitBlockStmt(BlockStmt& stmt) {
     }
 }
 
-llvm::Value* CodeGen::toBoolValue(llvm::Value* value) {
-    if (!value) {
-        return nullptr;
-    }
-
-    llvm::Type* ty = value->getType();
-    if (ty->isIntegerTy(1)) {
-        return value;
-    }
-    if (ty->isIntegerTy()) {
-        return builder_.CreateICmpNE(value, llvm::ConstantInt::get(ty, 0), "cond");
-    }
-    if (ty->isFloatingPointTy()) {
-        return builder_.CreateFCmpONE(value, llvm::ConstantFP::get(ty, 0.0), "cond");
-    }
-
-    std::cerr << "codegen error: condition does not have a boolean or numeric type\n";
-    return nullptr;
-}
-
 void CodeGen::visitIfStmt(IfStmt& stmt) {
     stmt.condition->accept(*this);
-    llvm::Value* condVal = toBoolValue(lastValue_);
+    llvm::Value* condVal = lastValue_;
     if (!condVal) {
-        std::cerr << "codegen error: if condition produced no value (line " << stmt.line << ")\n";
+        std::cerr << "error: if condition didn't produce a value (line " << stmt.line << ")\n";
         return;
     }
 
@@ -153,10 +133,9 @@ void CodeGen::visitWhileStmt(WhileStmt& stmt) {
     builder_.CreateBr(condBB);
     builder_.SetInsertPoint(condBB);
     stmt.condition->accept(*this);
-    llvm::Value* condVal = toBoolValue(lastValue_);
+    llvm::Value* condVal = lastValue_;
     if (!condVal) {
-        std::cerr << "codegen error: while condition produced no value (line " << stmt.line
-                  << ")\n";
+        std::cerr << "error: while condition didn't produce a value (line " << stmt.line << ")\n";
         return;
     }
     builder_.CreateCondBr(condVal, loopBB, afterBB);

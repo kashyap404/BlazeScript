@@ -45,5 +45,4 @@ private:
     llvm::Type* toLLVMType(Type* type);
     llvm::AllocaInst* createEntryBlockAlloca(llvm::Function* function, llvm::Type* type,
                                              const std::string& varName);
-    llvm::Value* toBoolValue(llvm::Value* value);
 };
