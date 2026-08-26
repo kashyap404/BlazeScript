@@ -6,7 +6,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find LLVM
-set(LLVM_DIR "/opt/homebrew/opt/llvm/lib/cmake/llvm")
+if(APPLE)
+    set(LLVM_DIR "/opt/homebrew/opt/llvm/lib/cmake/llvm")
+else()
+    set(LLVM_DIR "/usr/lib/llvm-22/cmake")
+endif()
 find_package(LLVM REQUIRED CONFIG)
 
 message(STATUS "Found LLVM ${LLVM_VERSION}")
