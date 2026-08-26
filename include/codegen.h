@@ -18,6 +18,7 @@ public:
     CodeGen();
     void generate(Program& program);
     void dump() const;
+    void dumpToFile(const std::string& path) const;
 
     void visitLiteralExpr(LiteralExpr& expr) override;
     void visitVariableExpr(VariableExpr& expr) override;

@@ -1,7 +1,9 @@
 #include "codegen.h"
+#include <fstream>
 #include <iostream>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/Support/FileSystem.h>
 #include <llvm/Support/raw_ostream.h>
 #include <variant>
 #include <vector>
@@ -10,6 +12,16 @@ CodeGen::CodeGen()
     : module_(std::make_unique<llvm::Module>("blazescript", context_)), builder_(context_) {}
 
 void CodeGen::dump() const { module_->print(llvm::outs(), nullptr); }
+
+void CodeGen::dumpToFile(const std::string& path) const {
+    std::error_code EC;
+    llvm::raw_fd_ostream dest(path, EC, llvm::sys::fs::OF_None);
+    if (EC) {
+        std::cerr << "Could not open file '" << path << "': " << EC.message() << "\n";
+        return;
+    }
+    module_->print(dest, nullptr);
+}
 
 llvm::AllocaInst* CodeGen::lookupValue(const std::string& name) const {
     auto it = values_.find(name);
