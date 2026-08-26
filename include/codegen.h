@@ -15,7 +15,7 @@
 
 class CodeGen : public Visitor {
 public:
-    CodeGen();
+    CodeGen(const std::string& moduleName);
     void generate(Program& program);
     void dump() const;
     void dumpToFile(const std::string& path) const;

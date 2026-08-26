@@ -8,8 +8,8 @@
 #include <variant>
 #include <vector>
 
-CodeGen::CodeGen()
-    : module_(std::make_unique<llvm::Module>("blazescript", context_)), builder_(context_) {}
+CodeGen::CodeGen(const std::string& moduleName)
+    : module_(std::make_unique<llvm::Module>(moduleName, context_)), builder_(context_) {}
 
 void CodeGen::dump() const { module_->print(llvm::outs(), nullptr); }
 

@@ -117,7 +117,13 @@ int main(int argc, char* argv[]) {
     }
 
     if (generateIR) {
+<<<<<<< HEAD
         CodeGen codegen;
+=======
+        std::cout << "--- LLVM IR ---\n";
+
+        CodeGen codegen(filename);
+>>>>>>> 0f5eac2 (fix(codegen): use input filename for module name instead of hardcoded string)
         codegen.generate(program);
 
         if (outputFile.empty()) {
@@ -129,4 +135,4 @@ int main(int argc, char* argv[]) {
     }
 
     return 0;
-}
+}   
