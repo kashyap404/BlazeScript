@@ -2,6 +2,13 @@
 
 BlazeScript is a statically typed, compiled programming language designed to target WebAssembly using an LLVM backend and a handwritten frontend.
 
+## Prerequisites
+
+Before building the project, ensure you have the following installed on your system:
+* **LLVM 22** (Required for the backend code generation)
+* **CMake** (v3.20 or higher)
+* A **C++17** compatible compiler (GCC, Clang, or Apple Clang)
+
 ## Building
 
 Clone the repository and build using CMake:
