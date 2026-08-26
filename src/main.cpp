@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "ast_printer.h"
+#include "codegen.h"
 #include "parser.h"
 #include "scanner.h"
 #include "semantic_analyzer.h"
@@ -11,19 +12,22 @@
 void printUsage(const char* programName) {
     std::cerr << "Usage: " << programName << " [options] <file>\n\n"
               << "Options:\n"
-              << "  -t, --tokens      Print tokens\n"
-              << "  -ast, --ast       Print AST\n"
-              << "  -s, --semantic    Run semantic analysis\n"
-              << "  -h, --help        Show this help\n";
+              << "  -t,  --tokens      Print tokens\n"
+              << "  -ast, --ast        Print AST\n"
+              << "  -s,  --semantic    Run semantic analysis\n"
+              << "  -ir, --ir          Emit LLVM IR to stdout (pure IR only)\n"
+              << "  -o <file>          Write IR to <file> instead of stdout (with -ir)\n"
+              << "  -h,  --help        Show this help\n";
 }
 
 int main(int argc, char* argv[]) {
     bool printTokens = false;
     bool printAst = false;
     bool runSemantic = false;
+    bool generateIR = false;
     std::string filename;
+    std::string outputFile;
 
-    // parse args
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
 
@@ -33,6 +37,14 @@ int main(int argc, char* argv[]) {
             printAst = true;
         } else if (arg == "-s" || arg == "--semantic") {
             runSemantic = true;
+        } else if (arg == "-ir" || arg == "--ir") {
+            generateIR = true;
+        } else if (arg == "-o") {
+            if (i + 1 >= argc) {
+                std::cerr << "Error: -o requires a filename\n";
+                return 1;
+            }
+            outputFile = argv[++i];
         } else if (arg == "-h" || arg == "--help") {
             printUsage(argv[0]);
             return 0;
@@ -55,7 +67,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    if (!printTokens && !printAst && !runSemantic) {
+    if (!printTokens && !printAst && !runSemantic && !generateIR) {
         runSemantic = true;
     }
 
@@ -75,8 +87,9 @@ int main(int argc, char* argv[]) {
 
     try {
         program = parser.parse();
-        std::cout << "Parsing succeeded: " << program.statements.size() << " statement(s), "
-                  << program.functions.size() << " function(s).\n\n";
+        std::cerr << "Parsing succeeded: " << program.statements.size()
+                  << " statement(s), " << program.functions.size()
+                  << " function(s).\n\n";
     } catch (const std::exception& e) {
         std::cerr << "Parsing failed: " << e.what() << "\n";
         return 1;
@@ -89,8 +102,9 @@ int main(int argc, char* argv[]) {
         std::cout << "\n";
     }
 
-    if (runSemantic) {
-        std::cout << "--- Semantic Analysis ---\n";
+    if (runSemantic || generateIR) {
+        std::cerr << "--- Semantic Analysis ---\n";
+
         SemanticAnalyzer analyzer;
         analyzer.analyze(program);
 
@@ -99,8 +113,22 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        std::cout << "Semantic analysis passed! Types and scopes are valid.\n";
+        std::cerr << "Semantic analysis passed! Types and scopes are valid.\n\n";
+    }
+
+    if (generateIR) {
+        std::cout << "--- LLVM IR ---\n";
+
+        CodeGen codegen(filename);
+        codegen.generate(program);
+
+        if (outputFile.empty()) {
+            codegen.dump();
+        } else {
+            codegen.dumpToFile(outputFile);
+            std::cerr << "LLVM IR written to " << outputFile << "\n";
+        }
     }
 
     return 0;
-}
+}   
