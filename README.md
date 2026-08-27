@@ -48,7 +48,9 @@ If no flag is provided, semantic analysis is run by default.
 
 ## Overview
 
-BlazeScript currently has a handwritten scanner and parser, followed by semantic analysis for type and scope checking. The resulting AST is then passed to the LLVM backend to generate LLVM IR.
+BlazeScript has compiler that first reads the source code and breaks it down into smaller parts called **tokens**. The **parser** then uses these tokens to understand the structure of the program and builds an **Abstract Syntax Tree (AST)**. After that, **semantic analysis** checks the program for things like incorrect types, undeclared variables, and invalid function usage.
+
+Once the program passes these checks, **code generation** begins. The compiler walks through the AST and uses the **LLVM backend** to generate **LLVM Intermediate Representation (IR)** for the program. This IR can then be further processed by LLVM's tools.
 
 ## Currently Supported Language Features
 
