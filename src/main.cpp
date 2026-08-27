@@ -25,6 +25,7 @@ int main(int argc, char* argv[]) {
     bool printAst = false;
     bool runSemantic = false;
     bool generateIR = false;
+
     std::string filename;
     std::string outputFile;
 
@@ -44,6 +45,7 @@ int main(int argc, char* argv[]) {
                 std::cerr << "Error: -o requires a filename\n";
                 return 1;
             }
+
             outputFile = argv[++i];
         } else if (arg == "-h" || arg == "--help") {
             printUsage(argv[0]);
@@ -57,6 +59,7 @@ int main(int argc, char* argv[]) {
                 std::cerr << "Only one input file is allowed.\n";
                 return 1;
             }
+
             filename = arg;
         }
     }
@@ -76,9 +79,11 @@ int main(int argc, char* argv[]) {
 
     if (printTokens) {
         std::cout << "--- Tokens ---\n";
+
         for (const Token& token : tokens) {
             std::cout << token.toString() << "\n";
         }
+
         std::cout << "\n";
     }
 
@@ -87,9 +92,9 @@ int main(int argc, char* argv[]) {
 
     try {
         program = parser.parse();
-        std::cerr << "Parsing succeeded: " << program.statements.size()
-                  << " statement(s), " << program.functions.size()
-                  << " function(s).\n\n";
+
+        std::cerr << "Parsing succeeded: " << program.statements.size() << " statement(s), "
+                  << program.functions.size() << " function(s).\n\n";
     } catch (const std::exception& e) {
         std::cerr << "Parsing failed: " << e.what() << "\n";
         return 1;
@@ -97,8 +102,10 @@ int main(int argc, char* argv[]) {
 
     if (printAst) {
         std::cout << "--- AST ---\n";
+
         AstPrinter printer;
         printer.print(program, std::cout);
+
         std::cout << "\n";
     }
 
@@ -117,8 +124,6 @@ int main(int argc, char* argv[]) {
     }
 
     if (generateIR) {
-        std::cout << "--- LLVM IR ---\n";
-
         CodeGen codegen(filename);
         codegen.generate(program);
 
@@ -126,9 +131,10 @@ int main(int argc, char* argv[]) {
             codegen.dump();
         } else {
             codegen.dumpToFile(outputFile);
+
             std::cerr << "LLVM IR written to " << outputFile << "\n";
         }
     }
 
     return 0;
-}   
+}
