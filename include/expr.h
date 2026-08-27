@@ -9,6 +9,7 @@ enum class OperatorType {
     MINUS,
     STAR,
     SLASH,
+    MOD,
     BANG,
     AND,
     OR,

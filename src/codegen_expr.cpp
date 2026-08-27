@@ -115,6 +115,10 @@ void CodeGen::visitBinaryExpr(BinaryExpr& expr) {
         lastValue_ = builder_.CreateSDiv(left, right, "div");
         break;
 
+    case OperatorType::MOD:                                      
+        lastValue_ = builder_.CreateSRem(left, right, "mod");    
+        break;
+
     case OperatorType::EQUAL_EQUAL:
         lastValue_ = builder_.CreateICmpEQ(left, right, "eq");
         break;

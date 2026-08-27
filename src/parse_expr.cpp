@@ -18,6 +18,8 @@ OperatorType tokenTypeToOperator(TokenType type) {
         return OperatorType::STAR;
     case TokenType::SLASH:
         return OperatorType::SLASH;
+    case TokenType::MOD:
+        return OperatorType::MOD;
     case TokenType::BANG:
         return OperatorType::BANG;
     case TokenType::AND:
@@ -126,7 +128,7 @@ std::unique_ptr<Expr> Parser::unary() {
 
 std::unique_ptr<Expr> Parser::factor() {
     std::unique_ptr<Expr> expr = unary();
-    while (match({TokenType::STAR, TokenType::SLASH})) {
+    while (match({TokenType::STAR, TokenType::SLASH, TokenType::MOD})) {
         Token op = previous();
         std::unique_ptr<Expr> right = unary();
         expr = std::make_unique<BinaryExpr>(std::move(expr), tokenTypeToOperator(op.type_),
