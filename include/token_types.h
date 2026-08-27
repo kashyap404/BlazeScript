@@ -11,6 +11,7 @@ enum class TokenType {
     DOT,
     MINUS,
     PLUS,
+    MOD,
     SEMICOLON,
     SLASH,
     STAR,

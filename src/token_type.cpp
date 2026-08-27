@@ -18,8 +18,12 @@ std::string tokenTypeToString(TokenType type) {
         return "MINUS";
     case TokenType::PLUS:
         return "PLUS";
+    case TokenType::MOD:
+        return "MOD";
     case TokenType::SEMICOLON:
         return "SEMICOLON";
+    case TokenType::SLASH:
+        return "SLASH";
     case TokenType::STAR:
         return "STAR";
     case TokenType::COLON:

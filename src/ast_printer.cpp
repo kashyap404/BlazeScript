@@ -27,6 +27,8 @@ void AstPrinter::emitOperator(OperatorType op) {
     case OperatorType::SLASH:
         *out_ << '/';
         break;
+    case OperatorType::MOD:
+        *out_ << '%';
     case OperatorType::BANG:
         *out_ << '!';
         break;

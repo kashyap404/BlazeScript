@@ -98,6 +98,9 @@ void Scanner::scanToken() {
     case '+':
         addToken(TokenType::PLUS);
         break;
+    case '%':                          
+        addToken(TokenType::MOD);       
+        break;
     case ';':
         addToken(TokenType::SEMICOLON);
         break;
