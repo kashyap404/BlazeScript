@@ -3,6 +3,7 @@
 #include <iostream>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/Passes/PassBuilder.h> 
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/raw_ostream.h>
 #include <variant>
@@ -31,6 +32,23 @@ llvm::AllocaInst* CodeGen::lookupValue(const std::string& name) const {
     }
 
     return nullptr;
+}
+void CodeGen::optimize() {
+    llvm::PassBuilder passBuilder;
+    llvm::LoopAnalysisManager loopAM;
+    llvm::FunctionAnalysisManager functionAM;
+    llvm::CGSCCAnalysisManager cgsccAM;
+    llvm::ModuleAnalysisManager moduleAM;
+
+    passBuilder.registerModuleAnalyses(moduleAM);
+    passBuilder.registerCGSCCAnalyses(cgsccAM);
+    passBuilder.registerFunctionAnalyses(functionAM);
+    passBuilder.registerLoopAnalyses(loopAM);
+    passBuilder.crossRegisterProxies(loopAM, functionAM, cgsccAM, moduleAM);
+
+    llvm::ModulePassManager modulePassManager =
+        passBuilder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
+    modulePassManager.run(*module_, moduleAM);
 }
 
 void CodeGen::visitLiteralExpr(LiteralExpr& expr) {

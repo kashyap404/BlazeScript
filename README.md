@@ -37,14 +37,15 @@ If no flag is provided, semantic analysis is run by default.
 
 ### Command-Line Flags
 
-| Flag               | Description             |
-| ------------------ | ----------------------- |
-| `-t`, `--tokens`   | Print tokens            |
-| `-ast`, `--ast`    | Print the AST           |
-| `-s`, `--semantic` | Run semantic analysis   |
-| `-ir`, `--ir`      | Generate LLVM IR        |
-| `-o <file>`        | Write LLVM IR to a file |
-| `-h`, `--help`     | Show the help menu      |
+| Flag               | Description                    |
+|--------------------|--------------------------------|
+| `-t`, `--tokens`   | Print tokens                   |
+| `-ast`, `--ast`    | Print the AST                  |
+| `-s`, `--semantic` | Run semantic analysis          |
+| `-ir`, `--ir`      | Generate LLVM IR               |
+| `-oir`, `--oir`    | Generate optimized LLVM IR     |
+| `-o <file>`        | Write LLVM IR to a file        |
+| `-h`, `--help`     | Show the help menu             |
 
 ## Overview
 

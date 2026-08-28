@@ -18,6 +18,7 @@ public:
     CodeGen(const std::string& moduleName);
     void generate(Program& program);
     void dump() const;
+    void optimize();
     void dumpToFile(const std::string& path) const;
 
     void visitLiteralExpr(LiteralExpr& expr) override;
