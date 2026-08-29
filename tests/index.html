@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>blazescript bench</title>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; }
+
+  body {
+    background: #0c0c0c;
+    color: #d4d4d4;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.6;
+    padding: 40px 20px 80px;
+    position: relative;
+  }
+
+  canvas#bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .prompt-line { color: #6a9955; }
+  .prompt-line::before { content: "$ "; color: #565656; }
+
+  h1 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #d4d4d4;
+    margin: 4px 0 2px;
+  }
+
+  .path { color: #565656; }
+
+  .divider {
+    color: #333;
+    margin: 14px 0;
+    user-select: none;
+    white-space: pre;
+    overflow: hidden;
+  }
+
+  p.intro {
+    color: #9d9d9d;
+    max-width: 640px;
+    margin: 10px 0 20px;
+  }
+
+  button#runButton {
+    font-family: inherit;
+    font-size: 14px;
+    background: transparent;
+    color: #d4d4d4;
+    border: 1px solid #3a3a3a;
+    padding: 8px 16px;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+  }
+  button#runButton:hover:not(:disabled) { border-color: #6a9955; color: #6a9955; }
+  button#runButton:disabled { color: #565656; cursor: wait; }
+
+  #status {
+    display: inline-block;
+    margin-left: 14px;
+    color: #565656;
+    font-size: 12.5px;
+  }
+
+  .results-wrap {
+    margin-top: 22px;
+    overflow-x: auto;
+  }
+
+  table.results {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 12.5px;
+    background: rgba(12, 12, 12, 0.7);
+  }
+
+  table.results th {
+    text-align: left;
+    color: #565656;
+    font-weight: 500;
+    padding: 4px 14px 6px 0;
+    border-bottom: 1px solid #232323;
+    white-space: nowrap;
+  }
+
+  table.results td {
+    padding: 7px 14px 7px 0;
+    white-space: nowrap;
+    border-bottom: 1px solid #171717;
+  }
+
+  table.results tr.row {
+    opacity: 0;
+    animation: appear 0.3s ease forwards;
+  }
+
+  @keyframes appear {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .bname { color: #d4d4d4; }
+  .btag { color: #4a4a4a; font-size: 11px; display: block; }
+  .dim { color: #565656; }
+  .num { color: #d4d4d4; }
+  .ok { color: #6a9955; }
+  .bad { color: #c96b6b; }
+  .wasm-c { color: #d7ba7d; }
+  .js-c { color: #4fa3d1; }
+  .bar-track { font-family: inherit; letter-spacing: -1px; }
+
+  .lower-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 18px;
+    margin-top: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 760px) {
+    .lower-grid { grid-template-columns: 1fr; }
+  }
+
+  .chart-wrap {
+    border: 1px solid #232323;
+    padding: 14px 16px 8px;
+    opacity: 0;
+    background: rgba(12, 12, 12, 0.7);
+  }
+  .chart-wrap.show { animation: appear 0.4s ease forwards; }
+
+  .chart-title { color: #9d9d9d; font-size: 12px; margin-bottom: 8px; }
+  .chart-title .n { color: #565656; }
+
+  canvas#chart { display: block; width: 100%; height: 200px; }
+
+  .legend { display: flex; gap: 20px; margin-top: 4px; font-size: 11.5px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; color: #9d9d9d; }
+  .legend-swatch { width: 8px; height: 8px; display: inline-block; }
+  .legend-swatch.wasm { background: #d7ba7d; }
+  .legend-swatch.js { background: #4fa3d1; }
+
+  .summary-wrap {
+    border: 1px solid #232323;
+    padding: 14px 16px;
+    opacity: 0;
+    background: rgba(12, 12, 12, 0.7);
+  }
+  .summary-wrap.show { animation: appear 0.4s ease 0.1s forwards; }
+
+  .summary-title { color: #9d9d9d; font-size: 12px; margin-bottom: 10px; }
+
+  table.stats-table { border-collapse: collapse; width: 100%; }
+  table.stats-table td { padding: 4px 0; font-size: 12.5px; }
+  table.stats-table td.k { color: #565656; }
+  table.stats-table td.v { color: #d4d4d4; text-align: right; }
+
+  footer { margin-top: 34px; color: #3a3a3a; font-size: 11.5px; }
+
+  ::selection { background: #6a9955; color: #0c0c0c; }
+</style>
+</head>
+
+<body>
+
+<canvas id="bg"></canvas>
+
+<main>
+
+  <div class="path">~/blazescript/tests</div>
+  <h1>bench.sh — wasm vs js</h1>
+  <div class="divider">────────────────────────────────────────────────────</div>
+
+  <p class="intro">
+    five workloads, two runtimes. wasm side compiled by blazescript from
+    benchmark.wasm, js side handwritten. timed with performance.now() in
+    the same tab, same event loop. round counts are scaled per-benchmark
+    so fast functions still register above clock resolution.
+  </p>
+
+  <button id="runButton" onclick="runBenchmarks()">run ./bench --all</button>
+  <span id="status"></span>
+
+  <div class="results-wrap">
+    <table class="results" id="resultsTable" style="display:none">
+      <thead>
+        <tr>
+          <th>benchmark</th>
+          <th>wasm</th>
+          <th></th>
+          <th>js</th>
+          <th></th>
+          <th>match</th>
+          <th>speedup</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+
+  <div class="lower-grid" id="lowerGrid" style="display:none">
+    <div class="chart-wrap" id="chartWrap">
+      <div class="chart-title">execution time <span class="n">// lower is better</span></div>
+      <canvas id="chart"></canvas>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch wasm"></span>wasm</div>
+        <div class="legend-item"><span class="legend-swatch js"></span>js</div>
+      </div>
+    </div>
+
+    <div class="summary-wrap" id="summaryWrap">
+      <div class="summary-title">summary</div>
+      <table class="stats-table" id="summaryTable"></table>
+    </div>
+  </div>
+
+  <footer>results vary by browser / device / background load. relative comparison only.</footer>
+
+</main>
+
+
+<script>
+
+/*
+ * ---- background starfield + cursor-link effect ----
+ * Small dim dots drift very slowly; lines are drawn from the cursor
+ * to any star within a radius, fading with distance. Kept subtle
+ * (low opacity, muted palette) so it doesn't compete with the
+ * terminal content sitting above it.
+ */
+
+(function initStarfield() {
+  const canvas = document.getElementById("bg");
+  const ctx = canvas.getContext("2d");
+
+  let width, height, dpr;
+  let stars = [];
+  const mouse = { x: null, y: null };
+  const LINK_RADIUS = 140;
+  const STAR_COUNT_DIVISOR = 9000; // lower = more stars
+
+  function resize() {
+    dpr = window.devicePixelRatio || 1;
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    seedStars();
+  }
+
+  function seedStars() {
+    const count = Math.round((width * height) / STAR_COUNT_DIVISOR);
+    stars = Array.from({ length: count }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      r: Math.random() * 1.0 + 0.4,
+      vx: (Math.random() - 0.5) * 0.06,
+      vy: (Math.random() - 0.5) * 0.06,
+      twinklePhase: Math.random() * Math.PI * 2,
+      twinkleSpeed: 0.004 + Math.random() * 0.006
+    }));
+  }
+
+  function step(time) {
+    ctx.clearRect(0, 0, width, height);
+
+    for (const s of stars) {
+      // drift
+      s.x += s.vx;
+      s.y += s.vy;
+
+      // wrap around edges
+      if (s.x < 0) s.x = width;
+      if (s.x > width) s.x = 0;
+      if (s.y < 0) s.y = height;
+      if (s.y > height) s.y = 0;
+
+      // gentle twinkle
+      const twinkle = 0.55 + Math.sin(time * s.twinkleSpeed + s.twinklePhase) * 0.35;
+
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(160, 160, 160, ${0.35 * twinkle})`;
+      ctx.fill();
+
+      // cursor link line
+      if (mouse.x !== null) {
+        const dx = s.x - mouse.x;
+        const dy = s.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < LINK_RADIUS) {
+          const opacity = (1 - dist / LINK_RADIUS) * 0.35;
+          ctx.beginPath();
+          ctx.moveTo(s.x, s.y);
+          ctx.lineTo(mouse.x, mouse.y);
+          ctx.strokeStyle = `rgba(106, 153, 85, ${opacity})`; // matches terminal green accent
+          ctx.lineWidth = 0.6;
+          ctx.stroke();
+        }
+      }
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  window.addEventListener("resize", resize);
+
+  window.addEventListener("mousemove", (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  });
+
+  window.addEventListener("mouseleave", () => {
+    mouse.x = null;
+    mouse.y = null;
+  });
+
+  resize();
+  requestAnimationFrame(step);
+})();
+
+
+/*
+ * ---- benchmark logic ----
+ * Matches benchmark.wasm — fibonacci (iterative), isPrime,
+ * countPrimes, gcd, collatz. JS mirrors match the wasm logic exactly.
+ *
+ * `rounds` is tuned per-benchmark so total wall time lands comfortably
+ * above performance.now()'s clamped resolution, without making the
+ * whole suite slow to run.
+ *
+ * collatz uses n=6171 instead of the classic n=837799 — the larger
+ * value overflows i32 inside the wasm module and can freeze the tab
+ * since the call is synchronous and blocks the main thread.
+ */
+
+const BENCHMARKS = [
+  {
+    name: "fibonacci",
+    tag: "n=46, iterative",
+    wasm: "fibonacci",
+    rounds: 2000000,
+    js: function jsFibonacci(n) {
+      if (n <= 1) return n;
+      let a = 0, b = 1;
+      for (let i = 2; i <= n; i++) {
+        const temp = a + b;
+        a = b;
+        b = temp;
+      }
+      return b;
+    },
+    inputs: [46]
+  },
+  {
+    name: "is-prime",
+    tag: "n=999983, trial division",
+    wasm: "isPrime",
+    rounds: 50000,
+    js: function jsIsPrime(n) {
+      if (n < 2) return 0;
+      for (let i = 2; i * i <= n; i++) {
+        if (n % i === 0) return 0;
+      }
+      return 1;
+    },
+    inputs: [999983]
+  },
+  {
+    name: "count-primes",
+    tag: "n=5000, trial division",
+    wasm: "countPrimes",
+    rounds: 50,
+    js: function jsCountPrimes(n) {
+      function isPrime(x) {
+        if (x < 2) return 0;
+        for (let i = 2; i * i <= x; i++) {
+          if (x % i === 0) return 0;
+        }
+        return 1;
+      }
+      let count = 0;
+      for (let i = 2; i <= n; i++) {
+        if (isPrime(i)) count++;
+      }
+      return count;
+    },
+    inputs: [5000]
+  },
+  {
+    name: "gcd",
+    tag: "123456789, 9876543",
+    wasm: "gcd",
+    rounds: 3000000,
+    js: function jsGcd(a, b) {
+      let x = a, y = b;
+      while (y !== 0) {
+        const temp = y;
+        y = x % y;
+        x = temp;
+      }
+      return x;
+    },
+    inputs: [123456789, 9876543]
+  },
+  {
+    name: "collatz",
+    tag: "n=6171, branching + arithmetic",
+    wasm: "collatz",
+    rounds: 15000,
+    js: function jsCollatz(n) {
+      let x = n, steps = 0;
+      while (x !== 1) {
+        x = (x % 2 === 0) ? x / 2 : 3 * x + 1;
+        steps++;
+      }
+      return steps;
+    },
+    inputs: [6171]
+  }
+];
+
+const WARMUP_ROUNDS = 10;
+const WASM_PATH = "benchmark.wasm";
+
+function bar(fraction, width = 16) {
+  const filled = Math.max(1, Math.round(fraction * width));
+  return "█".repeat(filled) + "░".repeat(width - filled);
+}
+
+function callFunction(fn, inputs) {
+  return fn(...inputs);
+}
+
+async function timed(wasmFn, jsFn, inputs, rounds) {
+  for (let r = 0; r < WARMUP_ROUNDS; r++) {
+    callFunction(wasmFn, inputs);
+    jsFn(...inputs);
+  }
+
+  let wasmResult = 0;
+  const wasmStart = performance.now();
+  for (let r = 0; r < rounds; r++) {
+    wasmResult = callFunction(wasmFn, inputs);
+  }
+  const wasmTime = performance.now() - wasmStart;
+
+  let jsResult = 0;
+  const jsStart = performance.now();
+  for (let r = 0; r < rounds; r++) {
+    jsResult = jsFn(...inputs);
+  }
+  const jsTime = performance.now() - jsStart;
+
+  return { wasmResult, jsResult, wasmTime, jsTime, rounds };
+}
+
+function addResultRow(benchmark, data, index) {
+  const max = Math.max(data.wasmTime, data.jsTime, 0.001);
+  const bothNearZero = data.wasmTime < 0.001 && data.jsTime < 0.001;
+  const speed = bothNearZero ? null : data.jsTime / Math.max(data.wasmTime, 0.001);
+  const match = data.wasmResult === data.jsResult;
+
+  let verdictClass, verdictText;
+  if (speed === null) {
+    verdictClass = "dim";
+    verdictText = "too fast to measure";
+  } else if (speed >= 1) {
+    verdictClass = "ok";
+    verdictText = `${speed.toFixed(2)}x wasm`;
+  } else {
+    verdictClass = "bad";
+    verdictText = `${(1 / speed).toFixed(2)}x js`;
+  }
+
+  const row = document.createElement("tr");
+  row.className = "row";
+  row.style.animationDelay = (index * 70) + "ms";
+
+  row.innerHTML = `
+    <td><span class="bname">${benchmark.name}</span><span class="btag">${benchmark.tag} · ${data.rounds.toLocaleString()} calls</span></td>
+    <td class="wasm-c bar-track">${bar(data.wasmTime / max)}</td>
+    <td class="num">${data.wasmTime.toFixed(3)}ms</td>
+    <td class="js-c bar-track">${bar(data.jsTime / max)}</td>
+    <td class="num">${data.jsTime.toFixed(3)}ms</td>
+    <td class="${match ? "ok" : "bad"}">${match ? "✓" : "✕"}</td>
+    <td class="${verdictClass}">${verdictText}</td>
+  `;
+
+  document.getElementById("resultsBody").appendChild(row);
+  return speed;
+}
+
+function drawChart(canvas, series) {
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const cssWidth = canvas.clientWidth;
+  const cssHeight = canvas.clientHeight;
+
+  canvas.width = cssWidth * dpr;
+  canvas.height = cssHeight * dpr;
+  ctx.scale(dpr, dpr);
+
+  const padL = 92, padR = 60, padT = 10, padB = 24;
+  const w = cssWidth - padL - padR;
+  const h = cssHeight - padT - padB;
+
+  const maxVal = Math.max(...series.flatMap(s => [s.wasm, s.js]), 0.001) * 1.15;
+  const rowH = h / series.length;
+  const barH = Math.min(7, rowH * 0.24);
+  const gap = rowH * 0.12;
+
+  const gridColor = "#1c1c1c";
+  const textColor = "#565656";
+  ctx.font = '10.5px "IBM Plex Mono", monospace';
+
+  let frame = 0;
+  const totalFrames = 36;
+
+  function renderFrame() {
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+    ctx.strokeStyle = gridColor;
+    ctx.fillStyle = textColor;
+
+    const gridSteps = 4;
+    for (let i = 0; i <= gridSteps; i++) {
+      const x = padL + (w / gridSteps) * i;
+      ctx.beginPath();
+      ctx.moveTo(x, padT);
+      ctx.lineTo(x, padT + h);
+      ctx.stroke();
+      const val = (maxVal / gridSteps) * i;
+      ctx.textAlign = "center";
+      ctx.fillText(val.toFixed(2), x, padT + h + 15);
+    }
+
+    const progress = Math.min(frame / totalFrames, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+
+    series.forEach((s, i) => {
+      const rowY = padT + i * rowH;
+
+      ctx.fillStyle = "#9d9d9d";
+      ctx.textAlign = "right";
+      ctx.fillText(s.name, padL - 10, rowY + rowH / 2 + 3);
+
+      const wasmW = (s.wasm / maxVal) * w * eased;
+      ctx.fillStyle = "#d7ba7d";
+      ctx.fillRect(padL, rowY + gap, wasmW, barH);
+
+      const jsW = (s.js / maxVal) * w * eased;
+      ctx.fillStyle = "#4fa3d1";
+      ctx.fillRect(padL, rowY + gap * 2 + barH, jsW, barH);
+
+      if (progress > 0.85) {
+        ctx.fillStyle = "#d4d4d4";
+        ctx.textAlign = "left";
+        ctx.fillText(s.wasm.toFixed(2), padL + wasmW + 6, rowY + gap + barH - 1);
+        ctx.fillText(s.js.toFixed(2), padL + jsW + 6, rowY + gap * 2 + barH * 2 - 1);
+      }
+    });
+
+    frame++;
+    if (frame <= totalFrames) requestAnimationFrame(renderFrame);
+  }
+
+  requestAnimationFrame(renderFrame);
+}
+
+async function loadWasm() {
+  const response = await fetch(WASM_PATH);
+  if (!response.ok) {
+    throw new Error(`could not load ${WASM_PATH} (HTTP ${response.status})`);
+  }
+  const bytes = await response.arrayBuffer();
+  const { instance } = await WebAssembly.instantiate(bytes);
+  return instance;
+}
+
+async function runBenchmarks() {
+  const button = document.getElementById("runButton");
+  const status = document.getElementById("status");
+  const resultsTable = document.getElementById("resultsTable");
+  const resultsBody = document.getElementById("resultsBody");
+  const lowerGrid = document.getElementById("lowerGrid");
+  const chartWrap = document.getElementById("chartWrap");
+  const summaryWrap = document.getElementById("summaryWrap");
+
+  button.disabled = true;
+  button.textContent = "running...";
+  status.textContent = `loading ${WASM_PATH}...`;
+  status.className = "dim";
+  resultsBody.innerHTML = "";
+  resultsTable.style.display = "none";
+  lowerGrid.style.display = "none";
+  chartWrap.classList.remove("show");
+  summaryWrap.classList.remove("show");
+
+  try {
+    const instance = await loadWasm();
+    const wasm = instance.exports;
+
+    for (const benchmark of BENCHMARKS) {
+      if (typeof wasm[benchmark.wasm] !== "function") {
+        throw new Error(`export '${benchmark.wasm}' not found in ${WASM_PATH}`);
+      }
+    }
+
+    status.textContent = "module instantiated — running";
+    resultsTable.style.display = "table";
+
+    const results = [];
+    const speedups = [];
+
+    for (let i = 0; i < BENCHMARKS.length; i++) {
+      const benchmark = BENCHMARKS[i];
+      const data = await timed(wasm[benchmark.wasm], benchmark.js, benchmark.inputs, benchmark.rounds);
+      const speed = addResultRow(benchmark, data, i);
+
+      results.push({ name: benchmark.name, wasm: data.wasmTime, js: data.jsTime });
+      speedups.push(speed);
+
+      await new Promise(r => setTimeout(r, 1500));
+    }
+
+    lowerGrid.style.display = "grid";
+    await new Promise(r => setTimeout(r, 60));
+
+    drawChart(document.getElementById("chart"), results);
+    chartWrap.classList.add("show");
+
+    const validSpeedups = speedups.filter(s => Number.isFinite(s) && s > 0);
+    const overall = validSpeedups.length
+      ? Math.pow(validSpeedups.reduce((a, b) => a * b, 1), 1 / validSpeedups.length)
+      : 0;
+
+    const wasmWins = speedups.filter(s => s !== null && s >= 1).length;
+    const jsWins = speedups.filter(s => s !== null && s < 1).length;
+    const tooFast = speedups.filter(s => s === null).length;
+    const totalCalls = BENCHMARKS.reduce((sum, b) => sum + b.rounds * 2, 0);
+
+    document.getElementById("summaryTable").innerHTML = `
+      <tr><td class="k">benchmarks</td><td class="v">${BENCHMARKS.length}</td></tr>
+      <tr><td class="k">total calls</td><td class="v">${totalCalls.toLocaleString()}</td></tr>
+      <tr><td class="k">wasm wins</td><td class="v">${wasmWins}</td></tr>
+      <tr><td class="k">js wins</td><td class="v">${jsWins}</td></tr>
+      <tr><td class="k">too fast to rank</td><td class="v dim">${tooFast}</td></tr>
+      <tr><td class="k">geometric mean</td><td class="v ok">${validSpeedups.length ? overall.toFixed(2) + "x" : "—"}</td></tr>
+      <tr><td class="k">finished</td><td class="v dim">${new Date().toLocaleTimeString()}</td></tr>
+    `;
+    summaryWrap.classList.add("show");
+
+    status.textContent = "done";
+    status.className = "ok";
+
+  } catch (error) {
+    status.textContent = "error: " + error.message;
+    status.className = "bad";
+    console.error(error);
+  } finally {
+    button.disabled = false;
+    button.textContent = "run ./bench --all";
+  }
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,87 @@
+fn fibonacci(n: i32) -> i32 {
+    if (n <= 1) {
+        return n;
+    }
+
+    let a: i32 = 0;
+    let b: i32 = 1;
+    let i: i32 = 2;
+
+    while (i <= n) {
+        let temp: i32 = a + b;
+        a = b;
+        b = temp;
+        i = i + 1;
+    }
+
+    return b;
+}
+
+
+fn isPrime(n: i32) -> i32 {
+    if (n < 2) {
+        return 0;
+    }
+
+    let i: i32 = 2;
+
+    while (i * i <= n) {
+        if (n % i == 0) {
+            return 0;
+        }
+
+        i = i + 1;
+    }
+
+    return 1;
+}
+
+
+fn countPrimes(n: i32) -> i32 {
+    let count: i32 = 0;
+    let i: i32 = 2;
+
+    while (i <= n) {
+        let prime: i32 = isPrime(i);
+
+        if (prime != 0) {
+            count = count + 1;
+        }
+
+        i = i + 1;
+    }
+
+    return count;
+}
+
+
+fn gcd(a: i32, b: i32) -> i32 {
+    let x: i32 = a;
+    let y: i32 = b;
+
+    while (y != 0) {
+        let temp: i32 = y;
+        y = x % y;
+        x = temp;
+    }
+
+    return x;
+}
+
+
+fn collatz(n: i32) -> i32 {
+    let x: i32 = n;
+    let steps: i32 = 0;
+
+    while (x != 1) {
+        if (x % 2 == 0) {
+            x = x / 2;
+        } else {
+            x = 3 * x + 1;
+        }
+
+        steps = steps + 1;
+    }
+
+    return steps;
+}
