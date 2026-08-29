@@ -5,27 +5,26 @@
 
 SemanticAnalyzer::SemanticAnalyzer() = default;
 
-void SemanticAnalyzer::error(int line, int column, const std::string& message) {
+void SemanticAnalyzer::error(int line, int column, const std::string &message) {
     std::cerr << "[line " << line << ", col " << column << "] semantic error: " << message << "\n";
     hadError_ = true;
 }
 
-void SemanticAnalyzer::analyze(Program& program) {
-    for (const auto& fn : program.functions) {
+void SemanticAnalyzer::analyze(Program &program) {
+    for (const auto &fn : program.functions) {
         functions_[fn->proto.name.lexeme_] = fn.get();
     }
 
-    for (const auto& fn : program.functions) {
+    for (const auto &fn : program.functions) {
         analyzeFunction(*fn);
     }
-
-    for (const auto& stmt : program.statements) // note to self: this is empty for now
+    for (const auto &stmt : program.statements) 
     {
         stmt->accept(*this);
     }
 }
 
-void SemanticAnalyzer::analyzeFunction(FuncDefn& fn) {
+void SemanticAnalyzer::analyzeFunction(FuncDefn &fn) {
     auto fnSymbol =
         std::make_unique<Symbol>(Symbol{fn.proto.name.lexeme_, fn.proto.returnType,
                                         SymbolKind::FUNCTION, fn.proto.line, fn.proto.column});
@@ -36,7 +35,7 @@ void SemanticAnalyzer::analyzeFunction(FuncDefn& fn) {
 
     symbols_.beginScope();
 
-    for (const Parameter& p : fn.proto.params) {
+    for (const Parameter &p : fn.proto.params) {
         auto paramSymbol = std::make_unique<Symbol>(
             Symbol{p.name.lexeme_, p.type, SymbolKind::PARAMETER, p.line, p.column});
         if (!symbols_.declare(std::move(paramSymbol))) {
@@ -44,7 +43,7 @@ void SemanticAnalyzer::analyzeFunction(FuncDefn& fn) {
         }
     }
 
-    Type* savedReturnType = currentFunctionReturnType_;
+    Type *savedReturnType = currentFunctionReturnType_;
     currentFunctionReturnType_ = fn.proto.returnType;
 
     fn.body->accept(*this);
@@ -53,20 +52,13 @@ void SemanticAnalyzer::analyzeFunction(FuncDefn& fn) {
     symbols_.endScope();
 }
 
-// expressions
 
-void SemanticAnalyzer::visitLiteralExpr(LiteralExpr& expr) {
-    if (std::holds_alternative<int>(expr.value)) {
-        lastType_ = types_.getType(TypeKind::I32);
-    } else if (std::holds_alternative<bool>(expr.value)) {
-        lastType_ = types_.getType(TypeKind::BOOL);
-    } else {
-        lastType_ = types_.getType(TypeKind::UNKNOWN);
-    }
+void SemanticAnalyzer::visitLiteralExpr(LiteralExpr &expr) {
+    lastType_ = types_.getType(TypeKind::I32);
 }
 
-void SemanticAnalyzer::visitVariableExpr(VariableExpr& expr) {
-    Symbol* sym = symbols_.resolve(expr.name.lexeme_);
+void SemanticAnalyzer::visitVariableExpr(VariableExpr &expr) {
+    Symbol *sym = symbols_.resolve(expr.name.lexeme_);
     if (!sym) {
         error(expr.line, expr.column, "undeclared variable '" + expr.name.lexeme_ + "'");
         lastType_ = types_.getType(TypeKind::UNKNOWN);
@@ -75,11 +67,11 @@ void SemanticAnalyzer::visitVariableExpr(VariableExpr& expr) {
     lastType_ = sym->type;
 }
 
-void SemanticAnalyzer::visitBinaryExpr(BinaryExpr& expr) {
+void SemanticAnalyzer::visitBinaryExpr(BinaryExpr &expr) {
     expr.left->accept(*this);
-    Type* leftType = lastType_;
+    Type *leftType = lastType_;
     expr.right->accept(*this);
-    Type* rightType = lastType_;
+    Type *rightType = lastType_;
 
     if (leftType->kind == TypeKind::UNKNOWN || rightType->kind == TypeKind::UNKNOWN) {
         lastType_ = types_.getType(TypeKind::UNKNOWN);
@@ -123,7 +115,7 @@ void SemanticAnalyzer::visitBinaryExpr(BinaryExpr& expr) {
     case OperatorType::MINUS:
     case OperatorType::STAR:
     case OperatorType::SLASH:
-        // no implicit conversion
+    case OperatorType::MOD:
         if (!leftType->isNumeric() || !rightType->isNumeric() || !leftType->equals(rightType)) {
             error(expr.line, expr.column, "arithmetic requires matching numeric operands");
             lastType_ = types_.getType(TypeKind::UNKNOWN);
@@ -139,9 +131,9 @@ void SemanticAnalyzer::visitBinaryExpr(BinaryExpr& expr) {
     }
 }
 
-void SemanticAnalyzer::visitUnaryExpr(UnaryExpr& expr) {
+void SemanticAnalyzer::visitUnaryExpr(UnaryExpr &expr) {
     expr.right->accept(*this);
-    Type* rightType = lastType_;
+    Type *rightType = lastType_;
 
     if (rightType->kind == TypeKind::UNKNOWN) {
         lastType_ = types_.getType(TypeKind::UNKNOWN);
@@ -172,12 +164,12 @@ void SemanticAnalyzer::visitUnaryExpr(UnaryExpr& expr) {
     lastType_ = types_.getType(TypeKind::UNKNOWN);
 }
 
-void SemanticAnalyzer::visitAssignmentExpr(AssignmentExpr& expr) {
+void SemanticAnalyzer::visitAssignmentExpr(AssignmentExpr &expr) {
     expr.left->accept(*this);
-    Type* targetType = lastType_;
+    Type *targetType = lastType_;
 
     expr.value->accept(*this);
-    Type* valueType = lastType_;
+    Type *valueType = lastType_;
 
     if (targetType->kind != TypeKind::UNKNOWN && valueType->kind != TypeKind::UNKNOWN &&
         !targetType->equals(valueType)) {
@@ -187,8 +179,8 @@ void SemanticAnalyzer::visitAssignmentExpr(AssignmentExpr& expr) {
     lastType_ = targetType;
 }
 
-void SemanticAnalyzer::visitCallExpr(CallExpr& expr) {
-    auto* varExpr = dynamic_cast<VariableExpr*>(expr.callee.get());
+void SemanticAnalyzer::visitCallExpr(CallExpr &expr) {
+    auto *varExpr = dynamic_cast<VariableExpr *>(expr.callee.get());
     if (!varExpr) {
         error(expr.line, expr.column, "callee is not a function name");
         lastType_ = types_.getType(TypeKind::UNKNOWN);
@@ -203,8 +195,8 @@ void SemanticAnalyzer::visitCallExpr(CallExpr& expr) {
         return;
     }
 
-    FuncDefn* fn = it->second;
-    const auto& params = fn->proto.params;
+    FuncDefn *fn = it->second;
+    const auto &params = fn->proto.params;
 
     if (expr.arguments.size() != params.size()) {
         error(expr.line, expr.column,
@@ -226,9 +218,9 @@ void SemanticAnalyzer::visitCallExpr(CallExpr& expr) {
 
 // ---------- Statements ----------
 
-void SemanticAnalyzer::visitExpressionStmt(ExpressionStmt& stmt) { stmt.expression->accept(*this); }
+void SemanticAnalyzer::visitExpressionStmt(ExpressionStmt &stmt) { stmt.expression->accept(*this); }
 
-void SemanticAnalyzer::visitIfStmt(IfStmt& stmt) {
+void SemanticAnalyzer::visitIfStmt(IfStmt &stmt) {
     stmt.condition->accept(*this);
     if (lastType_->kind != TypeKind::UNKNOWN && lastType_->kind != TypeKind::BOOL) {
         error(stmt.condition->line, stmt.condition->column, "if condition must be bool");
@@ -240,7 +232,7 @@ void SemanticAnalyzer::visitIfStmt(IfStmt& stmt) {
     }
 }
 
-void SemanticAnalyzer::visitWhileStmt(WhileStmt& stmt) {
+void SemanticAnalyzer::visitWhileStmt(WhileStmt &stmt) {
     stmt.condition->accept(*this);
     if (lastType_->kind != TypeKind::UNKNOWN && lastType_->kind != TypeKind::BOOL) {
         error(stmt.condition->line, stmt.condition->column, "while condition must be bool");
@@ -249,7 +241,7 @@ void SemanticAnalyzer::visitWhileStmt(WhileStmt& stmt) {
     stmt.body->accept(*this);
 }
 
-void SemanticAnalyzer::visitReturnStmt(ReturnStmt& stmt) {
+void SemanticAnalyzer::visitReturnStmt(ReturnStmt &stmt) {
     if (stmt.value) {
         stmt.value->accept(*this);
         if (lastType_->kind != TypeKind::UNKNOWN &&
@@ -264,15 +256,15 @@ void SemanticAnalyzer::visitReturnStmt(ReturnStmt& stmt) {
     }
 }
 
-void SemanticAnalyzer::visitBlockStmt(BlockStmt& stmt) {
+void SemanticAnalyzer::visitBlockStmt(BlockStmt &stmt) {
     symbols_.beginScope();
-    for (const auto& s : stmt.statements) {
+    for (const auto &s : stmt.statements) {
         s->accept(*this);
     }
     symbols_.endScope();
 }
-void SemanticAnalyzer::visitVarDeclStmt(VarDeclStmt& stmt) {
-    Type* initializerType = nullptr;
+void SemanticAnalyzer::visitVarDeclStmt(VarDeclStmt &stmt) {
+    Type *initializerType = nullptr;
     if (stmt.initializer) {
         stmt.initializer->accept(*this);
         initializerType = lastType_;

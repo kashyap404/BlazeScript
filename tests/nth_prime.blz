@@ -1,0 +1,25 @@
+fn nthPrime(n: i32) -> i32 {
+    let count: i32 = 0;
+    let num: i32 = 1;
+
+    while (count < n) {
+        num = num + 1;
+
+        let divisor: i32 = 2;
+        let isPrime: i32 = 1;
+
+        while (divisor < num) {
+            if (num % divisor == 0) {
+                isPrime = 0;
+            }
+
+            divisor = divisor + 1;
+        }
+
+        if (isPrime == 1) {
+            count = count + 1;
+        }
+    }
+
+    return num;
+}

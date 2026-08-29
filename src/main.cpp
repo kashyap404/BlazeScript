@@ -12,19 +12,22 @@
 void printUsage(const char* programName) {
     std::cerr << "Usage: " << programName << " [options] <file>\n\n"
               << "Options:\n"
-              << "  -t,  --tokens      Print tokens\n"
-              << "  -ast, --ast        Print AST\n"
-              << "  -s,  --semantic    Run semantic analysis\n"
-              << "  -ir, --ir          Emit LLVM IR to stdout (pure IR only)\n"
-              << "  -o <file>          Write IR to <file> instead of stdout (with -ir)\n"
-              << "  -h,  --help        Show this help\n";
+              << "  -t,  --tokens          Print tokens\n"
+              << "  -ast, --ast            Print AST\n"
+              << "  -s,  --semantic        Run semantic analysis\n"
+              << "  -ir, --ir              Emit unoptimized LLVM IR to stdout\n"
+              << "  -oir, --optimized-ir   Emit optimized LLVM IR to stdout\n"
+              << "  -o <file>              Write IR to <file> instead of stdout (with -ir or -oir)\n"
+              << "  -h,  --help            Show this help\n";
 }
 
 int main(int argc, char* argv[]) {
     bool printTokens = false;
     bool printAst = false;
     bool runSemantic = false;
-    bool generateIR = false;
+    bool generateUnoptimizedIR = false; 
+    bool generateOptimizedIR = false;   
+
     std::string filename;
     std::string outputFile;
 
@@ -38,7 +41,9 @@ int main(int argc, char* argv[]) {
         } else if (arg == "-s" || arg == "--semantic") {
             runSemantic = true;
         } else if (arg == "-ir" || arg == "--ir") {
-            generateIR = true;
+            generateUnoptimizedIR = true;
+        } else if (arg == "-oir" || arg == "--optimized-ir") {
+            generateOptimizedIR = true;
         } else if (arg == "-o") {
             if (i + 1 >= argc) {
                 std::cerr << "Error: -o requires a filename\n";
@@ -67,7 +72,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    if (!printTokens && !printAst && !runSemantic && !generateIR) {
+    if (!printTokens && !printAst && !runSemantic && !generateUnoptimizedIR && !generateOptimizedIR) {
         runSemantic = true;
     }
 
@@ -87,9 +92,8 @@ int main(int argc, char* argv[]) {
 
     try {
         program = parser.parse();
-        std::cerr << "Parsing succeeded: " << program.statements.size()
-                  << " statement(s), " << program.functions.size()
-                  << " function(s).\n\n";
+        std::cerr << "Parsing succeeded: " << program.statements.size() << " statement(s), "
+                  << program.functions.size() << " function(s).\n\n";
     } catch (const std::exception& e) {
         std::cerr << "Parsing failed: " << e.what() << "\n";
         return 1;
@@ -102,9 +106,8 @@ int main(int argc, char* argv[]) {
         std::cout << "\n";
     }
 
-    if (runSemantic || generateIR) {
+    if (runSemantic || generateUnoptimizedIR || generateOptimizedIR) {
         std::cerr << "--- Semantic Analysis ---\n";
-
         SemanticAnalyzer analyzer;
         analyzer.analyze(program);
 
@@ -112,15 +115,15 @@ int main(int argc, char* argv[]) {
             std::cerr << "Semantic analysis failed due to type/scope errors.\n";
             return 1;
         }
-
         std::cerr << "Semantic analysis passed! Types and scopes are valid.\n\n";
     }
 
-    if (generateIR) {
-        std::cout << "--- LLVM IR ---\n";
-
+    if (generateUnoptimizedIR || generateOptimizedIR) {
         CodeGen codegen(filename);
         codegen.generate(program);
+        if (generateOptimizedIR) {
+            codegen.optimize();
+        }
 
         if (outputFile.empty()) {
             codegen.dump();
@@ -131,4 +134,4 @@ int main(int argc, char* argv[]) {
     }
 
     return 0;
-}   
+}

@@ -45,6 +45,7 @@ llvm_map_components_to_libnames(LLVM_LIBS
     Core
     Support
     IRReader
+    Passes
 )
 
 target_link_libraries(blazescript PRIVATE
