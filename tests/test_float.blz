@@ -1,0 +1,10 @@
+let x: f64 = 10.5;
+let y: f64 = 2.5;
+
+let add_result: f64 = x + y;     
+let sub_result: f64 = x - y;      
+let mul_result: f64 = x * y;      
+let div_result: f64 = x / y;      
+let mod_result: f64 = x % y;      
+
+let complex_expr: f64 = (x + y) * 2.0 - 1.5;

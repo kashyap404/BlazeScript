@@ -3,7 +3,7 @@
 #include <iostream>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Verifier.h>
-#include <llvm/Passes/PassBuilder.h> 
+#include <llvm/Passes/PassBuilder.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/raw_ostream.h>
 #include <variant>
@@ -54,11 +54,12 @@ void CodeGen::optimize() {
 void CodeGen::visitLiteralExpr(LiteralExpr& expr) {
     if (std::holds_alternative<int>(expr.value)) {
         int value = std::get<int>(expr.value);
-
         lastValue_ = llvm::ConstantInt::get(llvm::Type::getInt32Ty(context_), value, true);
+    } else if (std::holds_alternative<double>(expr.value)) {
+        double value = std::get<double>(expr.value);
+        lastValue_ = llvm::ConstantFP::get(llvm::Type::getDoubleTy(context_), value);
     } else if (std::holds_alternative<bool>(expr.value)) {
         bool value = std::get<bool>(expr.value);
-
         lastValue_ = llvm::ConstantInt::get(llvm::Type::getInt1Ty(context_), value);
     } else {
         std::cerr << "codegen error: unsupported literal type\n";
@@ -90,9 +91,9 @@ void CodeGen::visitUnaryExpr(UnaryExpr& expr) {
 
     switch (expr.op) {
     case OperatorType::MINUS:
-        lastValue_ = builder_.CreateNeg(operand, "neg");
+        lastValue_ = operand->getType()->isFloatingPointTy() ? builder_.CreateFNeg(operand, "fneg")
+                                                             : builder_.CreateNeg(operand, "neg");
         break;
-
     case OperatorType::BANG:
         lastValue_ =
             builder_.CreateICmpEQ(operand, llvm::Constant::getNullValue(operand->getType()), "not");
@@ -116,49 +117,63 @@ void CodeGen::visitBinaryExpr(BinaryExpr& expr) {
         return;
     }
 
+    // Check if we are dealing with floating-point numbers
+    bool isFloat = left->getType()->isFloatingPointTy();
+
     switch (expr.op) {
     case OperatorType::PLUS:
-        lastValue_ = builder_.CreateAdd(left, right, "add");
+        lastValue_ = isFloat ? builder_.CreateFAdd(left, right, "fadd")
+                             : builder_.CreateAdd(left, right, "add");
         break;
 
     case OperatorType::MINUS:
-        lastValue_ = builder_.CreateSub(left, right, "sub");
+        lastValue_ = isFloat ? builder_.CreateFSub(left, right, "fsub")
+                             : builder_.CreateSub(left, right, "sub");
         break;
 
     case OperatorType::STAR:
-        lastValue_ = builder_.CreateMul(left, right, "mul");
+        lastValue_ = isFloat ? builder_.CreateFMul(left, right, "fmul")
+                             : builder_.CreateMul(left, right, "mul");
         break;
 
     case OperatorType::SLASH:
-        lastValue_ = builder_.CreateSDiv(left, right, "div");
+        lastValue_ = isFloat ? builder_.CreateFDiv(left, right, "fdiv")
+                             : builder_.CreateSDiv(left, right, "div");
         break;
 
-    case OperatorType::MOD:                                      
-        lastValue_ = builder_.CreateSRem(left, right, "mod");    
+    case OperatorType::MOD:
+        lastValue_ = isFloat ? builder_.CreateFRem(left, right, "frem")
+                             : builder_.CreateSRem(left, right, "mod");
         break;
 
     case OperatorType::EQUAL_EQUAL:
-        lastValue_ = builder_.CreateICmpEQ(left, right, "eq");
+        lastValue_ = isFloat ? builder_.CreateFCmpOEQ(left, right, "feq")
+                             : builder_.CreateICmpEQ(left, right, "eq");
         break;
 
     case OperatorType::BANG_EQUAL:
-        lastValue_ = builder_.CreateICmpNE(left, right, "neq");
+        lastValue_ = isFloat ? builder_.CreateFCmpONE(left, right, "fne")
+                             : builder_.CreateICmpNE(left, right, "neq");
         break;
 
     case OperatorType::LESS:
-        lastValue_ = builder_.CreateICmpSLT(left, right, "lt");
+        lastValue_ = isFloat ? builder_.CreateFCmpOLT(left, right, "flt")
+                             : builder_.CreateICmpSLT(left, right, "lt");
         break;
 
     case OperatorType::LESS_EQUAL:
-        lastValue_ = builder_.CreateICmpSLE(left, right, "le");
+        lastValue_ = isFloat ? builder_.CreateFCmpOLE(left, right, "fle")
+                             : builder_.CreateICmpSLE(left, right, "le");
         break;
 
     case OperatorType::GREATER:
-        lastValue_ = builder_.CreateICmpSGT(left, right, "gt");
+        lastValue_ = isFloat ? builder_.CreateFCmpOGT(left, right, "fgt")
+                             : builder_.CreateICmpSGT(left, right, "gt");
         break;
 
     case OperatorType::GREATER_EQUAL:
-        lastValue_ = builder_.CreateICmpSGE(left, right, "ge");
+        lastValue_ = isFloat ? builder_.CreateFCmpOGE(left, right, "fge")
+                             : builder_.CreateICmpSGE(left, right, "ge");
         break;
 
     case OperatorType::AND:

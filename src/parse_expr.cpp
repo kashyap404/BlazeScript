@@ -94,9 +94,12 @@ std::unique_ptr<Expr> Parser::primary() {
 
     if (match({TokenType::NUMBER})) {
         Token tok = previous();
-        int value = std::holds_alternative<int>(tok.literal_)
-                        ? std::get<int>(tok.literal_)
-                        : static_cast<int>(std::get<double>(tok.literal_));
+        LiteralExpr::Value value;
+        if (std::holds_alternative<int>(tok.literal_)) {
+            value = std::get<int>(tok.literal_);
+        } else {
+            value = std::get<double>(tok.literal_); 
+        }
         return std::make_unique<LiteralExpr>(value, tok.line_, tok.column_);
     }
 
