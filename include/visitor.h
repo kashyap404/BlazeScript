@@ -6,13 +6,14 @@ class BinaryExpr;
 class UnaryExpr;
 class AssignmentExpr;
 class CallExpr;
+class ArrayLiteralExpr;
+class IndexExpr;
 
 class ExpressionStmt;
 class IfStmt;
 class WhileStmt;
 class ReturnStmt;
 class BlockStmt;
-
 class VarDeclStmt;
 
 class Visitor {
@@ -26,6 +27,8 @@ public:
     virtual void visitUnaryExpr(UnaryExpr& expr) = 0;
     virtual void visitAssignmentExpr(AssignmentExpr& expr) = 0;
     virtual void visitCallExpr(CallExpr& expr) = 0;
+    virtual void visitArrayLiteralExpr(ArrayLiteralExpr& expr) = 0;
+    virtual void visitIndexExpr(IndexExpr& expr) = 0;
 
     // Statements
     virtual void visitExpressionStmt(ExpressionStmt& stmt) = 0;
@@ -33,6 +36,5 @@ public:
     virtual void visitWhileStmt(WhileStmt& stmt) = 0;
     virtual void visitReturnStmt(ReturnStmt& stmt) = 0;
     virtual void visitBlockStmt(BlockStmt& stmt) = 0;
-
     virtual void visitVarDeclStmt(VarDeclStmt& stmt) = 0;
 };

@@ -27,10 +27,8 @@ class Expr {
 public:
     Expr(int line, int column) : line(line), column(column) {}
     virtual ~Expr() = default;
-
     int line;
     int column;
-
     virtual void accept(Visitor& visitor) = 0;
 };
 
@@ -39,15 +37,13 @@ public:
     using Value = std::variant<int, double, bool, std::string>;
     LiteralExpr(Value value, int line, int column) : Expr(line, column), value(std::move(value)) {}
     Value value;
-
     void accept(Visitor& visitor) override { visitor.visitLiteralExpr(*this); }
 };
+
 class VariableExpr : public Expr {
 public:
     VariableExpr(Token name, int line, int column) : Expr(line, column), name(std::move(name)) {}
-
     Token name;
-
     void accept(Visitor& visitor) override { visitor.visitVariableExpr(*this); }
 };
 
@@ -55,10 +51,8 @@ class UnaryExpr : public Expr {
 public:
     UnaryExpr(OperatorType op, std::unique_ptr<Expr> right, int line, int column)
         : Expr(line, column), op(op), right(std::move(right)) {}
-
     OperatorType op;
     std::unique_ptr<Expr> right;
-
     void accept(Visitor& visitor) override { visitor.visitUnaryExpr(*this); }
 };
 
@@ -67,11 +61,9 @@ public:
     BinaryExpr(std::unique_ptr<Expr> left, OperatorType op, std::unique_ptr<Expr> right, int line,
                int column)
         : Expr(line, column), left(std::move(left)), op(op), right(std::move(right)) {}
-
     std::unique_ptr<Expr> left;
     OperatorType op;
     std::unique_ptr<Expr> right;
-
     void accept(Visitor& visitor) override { visitor.visitBinaryExpr(*this); }
 };
 
@@ -79,10 +71,8 @@ class AssignmentExpr : public Expr {
 public:
     AssignmentExpr(std::unique_ptr<Expr> left, std::unique_ptr<Expr> value, int line, int column)
         : Expr(line, column), left(std::move(left)), value(std::move(value)) {}
-
     std::unique_ptr<Expr> left;
     std::unique_ptr<Expr> value;
-
     void accept(Visitor& visitor) override { visitor.visitAssignmentExpr(*this); }
 };
 
@@ -91,9 +81,24 @@ public:
     CallExpr(std::unique_ptr<Expr> callee, std::vector<std::unique_ptr<Expr>> arguments, int line,
              int column)
         : Expr(line, column), callee(std::move(callee)), arguments(std::move(arguments)) {}
-
     std::unique_ptr<Expr> callee;
     std::vector<std::unique_ptr<Expr>> arguments;
-
     void accept(Visitor& visitor) override { visitor.visitCallExpr(*this); }
+};
+
+class ArrayLiteralExpr : public Expr {
+public:
+    std::vector<std::unique_ptr<Expr>> elements;
+    ArrayLiteralExpr(std::vector<std::unique_ptr<Expr>> elems, int line, int column)
+        : Expr(line, column), elements(std::move(elems)) {}
+    void accept(Visitor& visitor) override { visitor.visitArrayLiteralExpr(*this); }
+};
+
+class IndexExpr : public Expr {
+public:
+    std::unique_ptr<Expr> object;
+    std::unique_ptr<Expr> index;
+    IndexExpr(std::unique_ptr<Expr> obj, std::unique_ptr<Expr> idx, int line, int column)
+        : Expr(line, column), object(std::move(obj)), index(std::move(idx)) {}
+    void accept(Visitor& visitor) override { visitor.visitIndexExpr(*this); }
 };

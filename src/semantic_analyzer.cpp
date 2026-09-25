@@ -5,26 +5,24 @@
 
 SemanticAnalyzer::SemanticAnalyzer() = default;
 
-void SemanticAnalyzer::error(int line, int column, const std::string &message) {
+void SemanticAnalyzer::error(int line, int column, const std::string& message) {
     std::cerr << "[line " << line << ", col " << column << "] semantic error: " << message << "\n";
     hadError_ = true;
 }
 
-void SemanticAnalyzer::analyze(Program &program) {
-    for (const auto &fn : program.functions) {
+void SemanticAnalyzer::analyze(Program& program) {
+    for (const auto& fn : program.functions) {
         functions_[fn->proto.name.lexeme_] = fn.get();
     }
-
-    for (const auto &fn : program.functions) {
+    for (const auto& fn : program.functions) {
         analyzeFunction(*fn);
     }
-    for (const auto &stmt : program.statements) 
-    {
+    for (const auto& stmt : program.statements) {
         stmt->accept(*this);
     }
 }
 
-void SemanticAnalyzer::analyzeFunction(FuncDefn &fn) {
+void SemanticAnalyzer::analyzeFunction(FuncDefn& fn) {
     auto fnSymbol =
         std::make_unique<Symbol>(Symbol{fn.proto.name.lexeme_, fn.proto.returnType,
                                         SymbolKind::FUNCTION, fn.proto.line, fn.proto.column});
@@ -32,31 +30,26 @@ void SemanticAnalyzer::analyzeFunction(FuncDefn &fn) {
         error(fn.proto.line, fn.proto.column,
               "function '" + fn.proto.name.lexeme_ + "' already declared");
     }
-
     symbols_.beginScope();
-
-    for (const Parameter &p : fn.proto.params) {
+    for (const Parameter& p : fn.proto.params) {
         auto paramSymbol = std::make_unique<Symbol>(
             Symbol{p.name.lexeme_, p.type, SymbolKind::PARAMETER, p.line, p.column});
         if (!symbols_.declare(std::move(paramSymbol))) {
             error(p.line, p.column, "parameter '" + p.name.lexeme_ + "' already declared");
         }
     }
-
-    Type *savedReturnType = currentFunctionReturnType_;
+    Type* savedReturnType = currentFunctionReturnType_;
     currentFunctionReturnType_ = fn.proto.returnType;
-
     fn.body->accept(*this);
-
     currentFunctionReturnType_ = savedReturnType;
     symbols_.endScope();
 }
 
-void SemanticAnalyzer::visitLiteralExpr(LiteralExpr &expr) {
+void SemanticAnalyzer::visitLiteralExpr(LiteralExpr& expr) {
     if (std::holds_alternative<int>(expr.value)) {
         lastType_ = types_.getType(TypeKind::I32);
     } else if (std::holds_alternative<double>(expr.value)) {
-        lastType_ = types_.getType(TypeKind::F64); 
+        lastType_ = types_.getType(TypeKind::F64);
     } else if (std::holds_alternative<bool>(expr.value)) {
         lastType_ = types_.getType(TypeKind::BOOL);
     } else {
@@ -64,8 +57,8 @@ void SemanticAnalyzer::visitLiteralExpr(LiteralExpr &expr) {
     }
 }
 
-void SemanticAnalyzer::visitVariableExpr(VariableExpr &expr) {
-    Symbol *sym = symbols_.resolve(expr.name.lexeme_);
+void SemanticAnalyzer::visitVariableExpr(VariableExpr& expr) {
+    Symbol* sym = symbols_.resolve(expr.name.lexeme_);
     if (!sym) {
         error(expr.line, expr.column, "undeclared variable '" + expr.name.lexeme_ + "'");
         lastType_ = types_.getType(TypeKind::UNKNOWN);
@@ -74,11 +67,11 @@ void SemanticAnalyzer::visitVariableExpr(VariableExpr &expr) {
     lastType_ = sym->type;
 }
 
-void SemanticAnalyzer::visitBinaryExpr(BinaryExpr &expr) {
+void SemanticAnalyzer::visitBinaryExpr(BinaryExpr& expr) {
     expr.left->accept(*this);
-    Type *leftType = lastType_;
+    Type* leftType = lastType_;
     expr.right->accept(*this);
-    Type *rightType = lastType_;
+    Type* rightType = lastType_;
 
     if (leftType->kind == TypeKind::UNKNOWN || rightType->kind == TypeKind::UNKNOWN) {
         lastType_ = types_.getType(TypeKind::UNKNOWN);
@@ -95,7 +88,6 @@ void SemanticAnalyzer::visitBinaryExpr(BinaryExpr &expr) {
         }
         lastType_ = types_.getType(TypeKind::BOOL);
         return;
-
     case OperatorType::EQUAL_EQUAL:
     case OperatorType::BANG_EQUAL:
         if (!leftType->equals(rightType)) {
@@ -105,7 +97,6 @@ void SemanticAnalyzer::visitBinaryExpr(BinaryExpr &expr) {
         }
         lastType_ = types_.getType(TypeKind::BOOL);
         return;
-
     case OperatorType::GREATER:
     case OperatorType::GREATER_EQUAL:
     case OperatorType::LESS:
@@ -117,7 +108,6 @@ void SemanticAnalyzer::visitBinaryExpr(BinaryExpr &expr) {
         }
         lastType_ = types_.getType(TypeKind::BOOL);
         return;
-
     case OperatorType::PLUS:
     case OperatorType::MINUS:
     case OperatorType::STAR:
@@ -130,7 +120,6 @@ void SemanticAnalyzer::visitBinaryExpr(BinaryExpr &expr) {
         }
         lastType_ = leftType;
         return;
-
     default:
         error(expr.line, expr.column, "unsupported binary operator");
         lastType_ = types_.getType(TypeKind::UNKNOWN);
@@ -138,15 +127,13 @@ void SemanticAnalyzer::visitBinaryExpr(BinaryExpr &expr) {
     }
 }
 
-void SemanticAnalyzer::visitUnaryExpr(UnaryExpr &expr) {
+void SemanticAnalyzer::visitUnaryExpr(UnaryExpr& expr) {
     expr.right->accept(*this);
-    Type *rightType = lastType_;
-
+    Type* rightType = lastType_;
     if (rightType->kind == TypeKind::UNKNOWN) {
         lastType_ = types_.getType(TypeKind::UNKNOWN);
         return;
     }
-
     if (expr.op == OperatorType::BANG) {
         if (rightType->kind != TypeKind::BOOL) {
             error(expr.line, expr.column, "'!' requires a bool operand");
@@ -156,7 +143,6 @@ void SemanticAnalyzer::visitUnaryExpr(UnaryExpr &expr) {
         lastType_ = types_.getType(TypeKind::BOOL);
         return;
     }
-
     if (expr.op == OperatorType::MINUS) {
         if (!rightType->isNumeric()) {
             error(expr.line, expr.column, "unary '-' requires a numeric operand");
@@ -166,34 +152,36 @@ void SemanticAnalyzer::visitUnaryExpr(UnaryExpr &expr) {
         lastType_ = rightType;
         return;
     }
-
     error(expr.line, expr.column, "unsupported unary operator");
     lastType_ = types_.getType(TypeKind::UNKNOWN);
 }
 
-void SemanticAnalyzer::visitAssignmentExpr(AssignmentExpr &expr) {
+void SemanticAnalyzer::visitAssignmentExpr(AssignmentExpr& expr) {
     expr.left->accept(*this);
-    Type *targetType = lastType_;
+    Type* targetType = lastType_;
+
+    if (!dynamic_cast<VariableExpr*>(expr.left.get()) &&
+        !dynamic_cast<IndexExpr*>(expr.left.get())) {
+        error(expr.line, expr.column, "invalid assignment target");
+    }
 
     expr.value->accept(*this);
-    Type *valueType = lastType_;
+    Type* valueType = lastType_;
 
     if (targetType->kind != TypeKind::UNKNOWN && valueType->kind != TypeKind::UNKNOWN &&
         !targetType->equals(valueType)) {
         error(expr.line, expr.column, "cannot assign mismatched type");
     }
-
     lastType_ = targetType;
 }
 
-void SemanticAnalyzer::visitCallExpr(CallExpr &expr) {
-    auto *varExpr = dynamic_cast<VariableExpr *>(expr.callee.get());
+void SemanticAnalyzer::visitCallExpr(CallExpr& expr) {
+    auto* varExpr = dynamic_cast<VariableExpr*>(expr.callee.get());
     if (!varExpr) {
         error(expr.line, expr.column, "callee is not a function name");
         lastType_ = types_.getType(TypeKind::UNKNOWN);
         return;
     }
-
     auto it = functions_.find(varExpr->name.lexeme_);
     if (it == functions_.end()) {
         error(expr.line, expr.column,
@@ -201,16 +189,13 @@ void SemanticAnalyzer::visitCallExpr(CallExpr &expr) {
         lastType_ = types_.getType(TypeKind::UNKNOWN);
         return;
     }
-
-    FuncDefn *fn = it->second;
-    const auto &params = fn->proto.params;
-
+    FuncDefn* fn = it->second;
+    const auto& params = fn->proto.params;
     if (expr.arguments.size() != params.size()) {
         error(expr.line, expr.column,
               "expected " + std::to_string(params.size()) + " argument(s), got " +
                   std::to_string(expr.arguments.size()));
     }
-
     std::size_t checkCount = std::min(expr.arguments.size(), params.size());
     for (std::size_t i = 0; i < checkCount; ++i) {
         expr.arguments[i]->accept(*this);
@@ -219,36 +204,65 @@ void SemanticAnalyzer::visitCallExpr(CallExpr &expr) {
                   "argument " + std::to_string(i + 1) + " type mismatch");
         }
     }
-
     lastType_ = fn->proto.returnType;
 }
 
-// ---------- Statements ----------
+void SemanticAnalyzer::visitArrayLiteralExpr(ArrayLiteralExpr& expr) {
+    if (expr.elements.empty()) {
+        error(expr.line, expr.column, "cannot infer type of empty array");
+        lastType_ = types_.getType(TypeKind::UNKNOWN);
+        return;
+    }
+    expr.elements[0]->accept(*this);
+    Type* elemType = lastType_;
+    for (size_t i = 1; i < expr.elements.size(); i++) {
+        expr.elements[i]->accept(*this);
+        if (!lastType_->equals(elemType)) {
+            error(expr.line, expr.column, "array elements must have same type");
+        }
+    }
+    lastType_ = types_.getArrayType(elemType, expr.elements.size());
+}
 
-void SemanticAnalyzer::visitExpressionStmt(ExpressionStmt &stmt) { stmt.expression->accept(*this); }
+void SemanticAnalyzer::visitIndexExpr(IndexExpr& expr) {
+    expr.object->accept(*this);
+    Type* objType = lastType_;
+    expr.index->accept(*this);
+    Type* idxType = lastType_;
 
-void SemanticAnalyzer::visitIfStmt(IfStmt &stmt) {
+    if (objType->kind != TypeKind::ARRAY) {
+        error(expr.line, expr.column, "indexing requires an array type");
+        lastType_ = types_.getType(TypeKind::UNKNOWN);
+        return;
+    }
+    if (!idxType->isInteger()) {
+        error(expr.line, expr.column, "array index must be an integer");
+    }
+    auto* arr = static_cast<ArrayType*>(objType);
+    lastType_ = arr->elementType;
+}
+
+void SemanticAnalyzer::visitExpressionStmt(ExpressionStmt& stmt) { stmt.expression->accept(*this); }
+
+void SemanticAnalyzer::visitIfStmt(IfStmt& stmt) {
     stmt.condition->accept(*this);
     if (lastType_->kind != TypeKind::UNKNOWN && lastType_->kind != TypeKind::BOOL) {
         error(stmt.condition->line, stmt.condition->column, "if condition must be bool");
     }
-
     stmt.thenBranch->accept(*this);
-    if (stmt.elseBranch) {
+    if (stmt.elseBranch)
         stmt.elseBranch->accept(*this);
-    }
 }
 
-void SemanticAnalyzer::visitWhileStmt(WhileStmt &stmt) {
+void SemanticAnalyzer::visitWhileStmt(WhileStmt& stmt) {
     stmt.condition->accept(*this);
     if (lastType_->kind != TypeKind::UNKNOWN && lastType_->kind != TypeKind::BOOL) {
         error(stmt.condition->line, stmt.condition->column, "while condition must be bool");
     }
-
     stmt.body->accept(*this);
 }
 
-void SemanticAnalyzer::visitReturnStmt(ReturnStmt &stmt) {
+void SemanticAnalyzer::visitReturnStmt(ReturnStmt& stmt) {
     if (stmt.value) {
         stmt.value->accept(*this);
         if (lastType_->kind != TypeKind::UNKNOWN &&
@@ -263,33 +277,28 @@ void SemanticAnalyzer::visitReturnStmt(ReturnStmt &stmt) {
     }
 }
 
-void SemanticAnalyzer::visitBlockStmt(BlockStmt &stmt) {
+void SemanticAnalyzer::visitBlockStmt(BlockStmt& stmt) {
     symbols_.beginScope();
-    for (const auto &s : stmt.statements) {
+    for (const auto& s : stmt.statements) {
         s->accept(*this);
     }
     symbols_.endScope();
 }
-void SemanticAnalyzer::visitVarDeclStmt(VarDeclStmt &stmt) {
-    Type *initializerType = nullptr;
+
+void SemanticAnalyzer::visitVarDeclStmt(VarDeclStmt& stmt) {
+    Type* initializerType = nullptr;
     if (stmt.initializer) {
         stmt.initializer->accept(*this);
         initializerType = lastType_;
     }
-
     if (initializerType && initializerType->kind != TypeKind::UNKNOWN) {
         if (!stmt.type->equals(initializerType)) {
-
             error(stmt.name.line_, stmt.name.column_, "Type mismatch in variable declaration.");
         }
     }
-
     auto sym = std::make_unique<Symbol>(Symbol{stmt.name.lexeme_, stmt.type, SymbolKind::VARIABLE,
-
                                                stmt.name.line_, stmt.name.column_});
-
     if (!symbols_.declare(std::move(sym))) {
-
         error(stmt.name.line_, stmt.name.column_,
               "Variable '" + stmt.name.lexeme_ + "' is already declared in this scope.");
     }

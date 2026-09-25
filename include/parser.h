@@ -7,7 +7,6 @@
 #include "expr.h"
 #include "stmt.h"
 #include "token.h"
-
 #include "function.h"
 
 struct Program {
@@ -31,7 +30,7 @@ private:
     std::unique_ptr<Expr> term();
     std::unique_ptr<Expr> factor();
     std::unique_ptr<Expr> unary();
-    std::unique_ptr<Expr> parseCall();
+    std::unique_ptr<Expr> parsePostfix(); // Renamed from parseCall
     std::unique_ptr<Expr> finishCall(std::unique_ptr<Expr> callee);
     std::unique_ptr<Expr> primary();
 

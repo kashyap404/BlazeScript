@@ -26,13 +26,10 @@ void CodeGen::dumpToFile(const std::string& path) const {
 
 llvm::AllocaInst* CodeGen::lookupValue(const std::string& name) const {
     auto it = values_.find(name);
-
-    if (it != values_.end()) {
-        return it->second;
-    }
-
+    if (it != values_.end()) return it->second;
     return nullptr;
 }
+
 void CodeGen::optimize() {
     llvm::PassBuilder passBuilder;
     llvm::LoopAnalysisManager loopAM;
@@ -69,36 +66,29 @@ void CodeGen::visitLiteralExpr(LiteralExpr& expr) {
 
 void CodeGen::visitVariableExpr(VariableExpr& expr) {
     llvm::AllocaInst* alloca = lookupValue(expr.name.lexeme_);
-
     if (!alloca) {
         std::cerr << "codegen error: undefined variable '" << expr.name.lexeme_ << "'\n";
         lastValue_ = nullptr;
         return;
     }
-
     lastValue_ = builder_.CreateLoad(alloca->getAllocatedType(), alloca, expr.name.lexeme_);
 }
 
 void CodeGen::visitUnaryExpr(UnaryExpr& expr) {
     expr.right->accept(*this);
-
     llvm::Value* operand = lastValue_;
-
     if (!operand) {
         lastValue_ = nullptr;
         return;
     }
-
     switch (expr.op) {
     case OperatorType::MINUS:
         lastValue_ = operand->getType()->isFloatingPointTy() ? builder_.CreateFNeg(operand, "fneg")
                                                              : builder_.CreateNeg(operand, "neg");
         break;
     case OperatorType::BANG:
-        lastValue_ =
-            builder_.CreateICmpEQ(operand, llvm::Constant::getNullValue(operand->getType()), "not");
+        lastValue_ = builder_.CreateICmpEQ(operand, llvm::Constant::getNullValue(operand->getType()), "not");
         break;
-
     default:
         lastValue_ = nullptr;
         break;
@@ -108,7 +98,6 @@ void CodeGen::visitUnaryExpr(UnaryExpr& expr) {
 void CodeGen::visitBinaryExpr(BinaryExpr& expr) {
     expr.left->accept(*this);
     llvm::Value* left = lastValue_;
-
     expr.right->accept(*this);
     llvm::Value* right = lastValue_;
 
@@ -117,73 +106,47 @@ void CodeGen::visitBinaryExpr(BinaryExpr& expr) {
         return;
     }
 
-    // Check if we are dealing with floating-point numbers
     bool isFloat = left->getType()->isFloatingPointTy();
-
     switch (expr.op) {
     case OperatorType::PLUS:
-        lastValue_ = isFloat ? builder_.CreateFAdd(left, right, "fadd")
-                             : builder_.CreateAdd(left, right, "add");
+        lastValue_ = isFloat ? builder_.CreateFAdd(left, right, "fadd") : builder_.CreateAdd(left, right, "add");
         break;
-
     case OperatorType::MINUS:
-        lastValue_ = isFloat ? builder_.CreateFSub(left, right, "fsub")
-                             : builder_.CreateSub(left, right, "sub");
+        lastValue_ = isFloat ? builder_.CreateFSub(left, right, "fsub") : builder_.CreateSub(left, right, "sub");
         break;
-
     case OperatorType::STAR:
-        lastValue_ = isFloat ? builder_.CreateFMul(left, right, "fmul")
-                             : builder_.CreateMul(left, right, "mul");
+        lastValue_ = isFloat ? builder_.CreateFMul(left, right, "fmul") : builder_.CreateMul(left, right, "mul");
         break;
-
     case OperatorType::SLASH:
-        lastValue_ = isFloat ? builder_.CreateFDiv(left, right, "fdiv")
-                             : builder_.CreateSDiv(left, right, "div");
+        lastValue_ = isFloat ? builder_.CreateFDiv(left, right, "fdiv") : builder_.CreateSDiv(left, right, "div");
         break;
-
     case OperatorType::MOD:
-        lastValue_ = isFloat ? builder_.CreateFRem(left, right, "frem")
-                             : builder_.CreateSRem(left, right, "mod");
+        lastValue_ = isFloat ? builder_.CreateFRem(left, right, "frem") : builder_.CreateSRem(left, right, "mod");
         break;
-
     case OperatorType::EQUAL_EQUAL:
-        lastValue_ = isFloat ? builder_.CreateFCmpOEQ(left, right, "feq")
-                             : builder_.CreateICmpEQ(left, right, "eq");
+        lastValue_ = isFloat ? builder_.CreateFCmpOEQ(left, right, "feq") : builder_.CreateICmpEQ(left, right, "eq");
         break;
-
     case OperatorType::BANG_EQUAL:
-        lastValue_ = isFloat ? builder_.CreateFCmpONE(left, right, "fne")
-                             : builder_.CreateICmpNE(left, right, "neq");
+        lastValue_ = isFloat ? builder_.CreateFCmpONE(left, right, "fne") : builder_.CreateICmpNE(left, right, "neq");
         break;
-
     case OperatorType::LESS:
-        lastValue_ = isFloat ? builder_.CreateFCmpOLT(left, right, "flt")
-                             : builder_.CreateICmpSLT(left, right, "lt");
+        lastValue_ = isFloat ? builder_.CreateFCmpOLT(left, right, "flt") : builder_.CreateICmpSLT(left, right, "lt");
         break;
-
     case OperatorType::LESS_EQUAL:
-        lastValue_ = isFloat ? builder_.CreateFCmpOLE(left, right, "fle")
-                             : builder_.CreateICmpSLE(left, right, "le");
+        lastValue_ = isFloat ? builder_.CreateFCmpOLE(left, right, "fle") : builder_.CreateICmpSLE(left, right, "le");
         break;
-
     case OperatorType::GREATER:
-        lastValue_ = isFloat ? builder_.CreateFCmpOGT(left, right, "fgt")
-                             : builder_.CreateICmpSGT(left, right, "gt");
+        lastValue_ = isFloat ? builder_.CreateFCmpOGT(left, right, "fgt") : builder_.CreateICmpSGT(left, right, "gt");
         break;
-
     case OperatorType::GREATER_EQUAL:
-        lastValue_ = isFloat ? builder_.CreateFCmpOGE(left, right, "fge")
-                             : builder_.CreateICmpSGE(left, right, "ge");
+        lastValue_ = isFloat ? builder_.CreateFCmpOGE(left, right, "fge") : builder_.CreateICmpSGE(left, right, "ge");
         break;
-
     case OperatorType::AND:
         lastValue_ = builder_.CreateAnd(left, right, "and");
         break;
-
     case OperatorType::OR:
         lastValue_ = builder_.CreateOr(left, right, "or");
         break;
-
     default:
         lastValue_ = nullptr;
         break;
@@ -191,73 +154,112 @@ void CodeGen::visitBinaryExpr(BinaryExpr& expr) {
 }
 
 void CodeGen::visitAssignmentExpr(AssignmentExpr& expr) {
-    auto* variable = dynamic_cast<VariableExpr*>(expr.left.get());
-
-    if (!variable) {
-        std::cerr << "codegen error: assignment target is not a variable\n";
+    if (auto* variable = dynamic_cast<VariableExpr*>(expr.left.get())) {
+        llvm::AllocaInst* alloca = lookupValue(variable->name.lexeme_);
+        if (!alloca) {
+            std::cerr << "codegen error: undefined variable '" << variable->name.lexeme_ << "'\n";
+            lastValue_ = nullptr;
+            return;
+        }
+        expr.value->accept(*this);
+        llvm::Value* value = lastValue_;
+        if (!value) {
+            lastValue_ = nullptr;
+            return;
+        }
+        builder_.CreateStore(value, alloca);
+        lastValue_ = value;  
+    } else if (auto* indexExpr = dynamic_cast<IndexExpr*>(expr.left.get())) {
+        indexExpr->object->accept(*this);
+        llvm::Value* arrayPtr = lastValue_;
+        indexExpr->index->accept(*this);
+        llvm::Value* index = lastValue_;
+        expr.value->accept(*this);
+        llvm::Value* value = lastValue_;
+        
+        if (auto* alloca = llvm::dyn_cast<llvm::AllocaInst>(arrayPtr)) {
+            llvm::Type* elemTy = alloca->getAllocatedType()->getArrayElementType();
+            llvm::Value* zero = llvm::ConstantInt::get(llvm::Type::getInt32Ty(context_), 0);
+            llvm::Value* ptr = builder_.CreateGEP(elemTy, alloca, {zero, index});
+            builder_.CreateStore(value, ptr);
+            lastValue_ = value;
+        } else {
+            std::cerr << "codegen error: cannot assign to non-variable array\n";
+            lastValue_ = nullptr;
+        }
+    } else {
+        std::cerr << "codegen error: assignment target is not a variable or index\n";
         lastValue_ = nullptr;
-        return;
     }
-
-    llvm::AllocaInst* alloca = lookupValue(variable->name.lexeme_);
-
-    if (!alloca) {
-        std::cerr << "codegen error: undefined variable '" << variable->name.lexeme_ << "'\n";
-        lastValue_ = nullptr;
-        return;
-    }
-
-    expr.value->accept(*this);
-
-    llvm::Value* value = lastValue_;
-
-    if (!value) {
-        lastValue_ = nullptr;
-        return;
-    }
-
-    builder_.CreateStore(value, alloca);
-    lastValue_ = value;
 }
 
 void CodeGen::visitCallExpr(CallExpr& expr) {
     auto* variable = dynamic_cast<VariableExpr*>(expr.callee.get());
-
     if (!variable) {
         std::cerr << "codegen error: unsupported callee\n";
         lastValue_ = nullptr;
         return;
     }
-
     llvm::Function* callee = module_->getFunction(variable->name.lexeme_);
-
     if (!callee) {
         std::cerr << "codegen error: unknown function '" << variable->name.lexeme_ << "'\n";
         lastValue_ = nullptr;
         return;
     }
-
     std::vector<llvm::Value*> args;
-
     for (auto& argument : expr.arguments) {
         argument->accept(*this);
-
-        llvm::Value* value = lastValue_;
-
-        if (!value) {
+        if (!lastValue_) {
             lastValue_ = nullptr;
             return;
         }
-
-        args.push_back(value);
+        args.push_back(lastValue_);
     }
-
     if (args.size() != callee->arg_size()) {
-        std::cerr << "codegen error: incorrect number of arguments for '" << variable->name.lexeme_
-                  << "'\n";
+        std::cerr << "codegen error: incorrect number of arguments for '" << variable->name.lexeme_ << "'\n";
         lastValue_ = nullptr;
         return;
     }
-
     lastValue_ = builder_.CreateCall(callee, args, "call");
+}
+
+void CodeGen::visitArrayLiteralExpr(ArrayLiteralExpr& expr) {
+    if (expr.elements.empty()) {
+        lastValue_ = nullptr;
+        return;
+    }
+    expr.elements[0]->accept(*this);
+    llvm::Type* elemLLVMTy = lastValue_->getType();
+    
+    std::vector<llvm::Constant*> constants;
+    for (auto& elem : expr.elements) {
+        elem->accept(*this);
+        constants.push_back(llvm::cast<llvm::Constant>(lastValue_));
+    }
+    llvm::ArrayType* arrTy = llvm::ArrayType::get(elemLLVMTy, constants.size());
+    lastValue_ = llvm::ConstantArray::get(arrTy, constants);
+}
+
+void CodeGen::visitIndexExpr(IndexExpr& expr) {
+    expr.object->accept(*this);
+    llvm::Value* arrayPtr = lastValue_;
+    expr.index->accept(*this);
+    llvm::Value* index = lastValue_;
+
+    if (auto* constant = llvm::dyn_cast<llvm::Constant>(arrayPtr)) {
+        if (auto* intIdx = llvm::dyn_cast<llvm::ConstantInt>(index)) {
+            lastValue_ = builder_.CreateExtractValue(constant, {(unsigned)intIdx->getZExtValue()});
+            return;
+        }
+    }
+    
+    if (auto* alloca = llvm::dyn_cast<llvm::AllocaInst>(arrayPtr)) {
+        llvm::Type* elemTy = alloca->getAllocatedType()->getArrayElementType();
+        llvm::Value* zero = llvm::ConstantInt::get(llvm::Type::getInt32Ty(context_), 0);
+        llvm::Value* ptr = builder_.CreateGEP(elemTy, alloca, {zero, index});
+        lastValue_ = builder_.CreateLoad(elemTy, ptr);
+    } else {
+        std::cerr << "codegen error: unsupported array indexing target\n";
+        lastValue_ = nullptr;
+    }
 }

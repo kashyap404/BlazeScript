@@ -9,10 +9,8 @@ struct ParseError : public std::runtime_error {
 } // namespace
 
 std::unique_ptr<Stmt> Parser::parseStmt() {
-
     if (match({TokenType::LET}))
         return parseVarDeclaration();
-
     if (match({TokenType::IF}))
         return parseIfStmt();
     if (match({TokenType::WHILE}))
@@ -27,10 +25,8 @@ std::unique_ptr<Stmt> Parser::parseStmt() {
 std::unique_ptr<Stmt> Parser::parseExprStmt() {
     int line = peek().line_;
     int column = peek().column_;
-
     std::unique_ptr<Expr> expr = parseExpression();
     consume(TokenType::SEMICOLON, "Expected ';' after expression.");
-
     return std::make_unique<ExpressionStmt>(std::move(expr), line, column);
 }
 
@@ -63,7 +59,6 @@ std::unique_ptr<Stmt> Parser::parseWhileStmt() {
     consume(TokenType::RIGHT_PAREN, "Expected ')' after while condition.");
 
     std::unique_ptr<Stmt> body = parseStmt();
-
     return std::make_unique<WhileStmt>(std::move(condition), std::move(body), line, column);
 }
 
@@ -77,7 +72,6 @@ std::unique_ptr<Stmt> Parser::parseReturnStmt() {
         value = parseExpression();
     }
     consume(TokenType::SEMICOLON, "Expected ';' after return value.");
-
     return std::make_unique<ReturnStmt>(std::move(value), line, column);
 }
 
@@ -91,26 +85,33 @@ std::unique_ptr<BlockStmt> Parser::parseBlock() {
         statements.push_back(parseStmt());
     }
     consume(TokenType::RIGHT_BRACE, "Expected '}' after block.");
-
     return std::make_unique<BlockStmt>(std::move(statements), line, column);
 }
+
 std::unique_ptr<Stmt> Parser::parseVarDeclaration() {
     Token name = consume(TokenType::IDENTIFIER, "Expected variable name.");
     consume(TokenType::COLON, "Expected ':' after variable name.");
-
     Type* type = parseType();
 
     std::unique_ptr<Expr> initializer = nullptr;
     if (match({TokenType::EQUAL})) {
-        initializer =
-            parseExpression(); // Changed to parseExpression() to match your existing functions
+        initializer = parseExpression();
     }
-
     consume(TokenType::SEMICOLON, "Expected ';' after variable declaration.");
     return std::make_unique<VarDeclStmt>(name, type, std::move(initializer));
 }
 
 Type* Parser::parseType() {
+    if (match({TokenType::LEFT_BRACKET})) {
+        Type* elemType = parseType();
+        consume(TokenType::SEMICOLON, "Expected ';' in array type.");
+        Token sizeTok = consume(TokenType::NUMBER, "Expected array size.");
+        int size = std::holds_alternative<int>(sizeTok.literal_)
+                       ? std::get<int>(sizeTok.literal_)
+                       : static_cast<int>(std::get<double>(sizeTok.literal_));
+        consume(TokenType::RIGHT_BRACKET, "Expected ']' after array type.");
+        return types_.getArrayType(elemType, size);
+    }
     if (match({TokenType::I32}))
         return types_.getType(TypeKind::I32);
     if (match({TokenType::I64}))

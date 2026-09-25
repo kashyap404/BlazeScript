@@ -29,6 +29,7 @@ void AstPrinter::emitOperator(OperatorType op) {
         break;
     case OperatorType::MOD:
         *out_ << '%';
+        break;
     case OperatorType::BANG:
         *out_ << '!';
         break;
@@ -105,11 +106,9 @@ void AstPrinter::print(const Program& program, std::ostream& out) {
     }
 }
 
-// expressions
 void AstPrinter::visitLiteralExpr(LiteralExpr& expr) {
     indent();
     *out_ << "Literal ";
-
     if (std::holds_alternative<int>(expr.value)) {
         *out_ << std::get<int>(expr.value);
     } else if (std::holds_alternative<bool>(expr.value)) {
@@ -117,7 +116,6 @@ void AstPrinter::visitLiteralExpr(LiteralExpr& expr) {
     } else if (std::holds_alternative<std::string>(expr.value)) {
         *out_ << "\"" << std::get<std::string>(expr.value) << "\"";
     }
-
     *out_ << '\n';
 }
 
@@ -161,7 +159,22 @@ void AstPrinter::visitCallExpr(CallExpr& expr) {
     depth_--;
 }
 
-// statements
+void AstPrinter::visitArrayLiteralExpr(ArrayLiteralExpr& expr) {
+    emit("ArrayLiteral");
+    depth_++;
+    for (const auto& elem : expr.elements) {
+        elem->accept(*this);
+    }
+    depth_--;
+}
+
+void AstPrinter::visitIndexExpr(IndexExpr& expr) {
+    emit("Index");
+    depth_++;
+    expr.object->accept(*this);
+    expr.index->accept(*this);
+    depth_--;
+}
 
 void AstPrinter::visitExpressionStmt(ExpressionStmt& stmt) {
     emit("ExpressionStmt");
@@ -173,17 +186,14 @@ void AstPrinter::visitExpressionStmt(ExpressionStmt& stmt) {
 void AstPrinter::visitIfStmt(IfStmt& stmt) {
     emit("If");
     depth_++;
-
     emit("condition");
     depth_++;
     stmt.condition->accept(*this);
     depth_--;
-
     emit("then");
     depth_++;
     stmt.thenBranch->accept(*this);
     depth_--;
-
     if (stmt.elseBranch) {
         emit("else");
         depth_++;
@@ -196,17 +206,14 @@ void AstPrinter::visitIfStmt(IfStmt& stmt) {
 void AstPrinter::visitWhileStmt(WhileStmt& stmt) {
     emit("While");
     depth_++;
-
     emit("condition");
     depth_++;
     stmt.condition->accept(*this);
     depth_--;
-
     emit("body");
     depth_++;
     stmt.body->accept(*this);
     depth_--;
-
     depth_--;
 }
 
@@ -227,10 +234,10 @@ void AstPrinter::visitBlockStmt(BlockStmt& stmt) {
     }
     depth_--;
 }
+
 void AstPrinter::visitVarDeclStmt(VarDeclStmt& stmt) {
     indent();
     *out_ << "VarDecl: " << stmt.name.lexeme_ << '\n';
-
     if (stmt.initializer) {
         depth_++;
         stmt.initializer->accept(*this);
